@@ -3,6 +3,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Stats from './pages/Stats'
 import Subscription from './pages/Subscription'
+import Achievements from './pages/Achievements'
 import AdminDashboard from './pages/Admin/Dashboard'
 import AdminUsers from './pages/Admin/Users'
 import AdminBroadcast from './pages/Admin/Broadcast'
@@ -17,7 +18,8 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="stats" element={<Stats />} />
-        <Route path="subscription" element={<Subscription />} />
+          <Route path="subscription" element={<Subscription />} />
+          <Route path="achievements" element={<Achievements />} />
         <Route path="admin" element={<AdminDashboard />} />
         <Route path="admin/users" element={<AdminUsers />} />
         <Route path="admin/broadcast" element={<AdminBroadcast />} />

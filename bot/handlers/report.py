@@ -55,8 +55,9 @@ async def handle_report(message: Message):
         )
         return
 
+    resp = None
     for ex_type, value in exercises_found.items():
-        await api.create_report(user_uuid, ex_type, value)
+        resp = await api.create_report(user_uuid, ex_type, value)
 
     await api.close()
 
@@ -73,7 +74,15 @@ async def handle_report(message: Message):
         label = labels.get(ex_type, ex_type)
         parts.append(f"{emoji} {label}: <b>{value}</b>")
     confirmation = "\n".join(parts)
+
+    new_ach = resp.get("new_achievements", []) if resp else []
+    ach_text = ""
+    if new_ach:
+        ach_lines = [f"{a['icon']} <b>{a['title']}</b>" for a in new_ach]
+        ach_text = "\n\n🏅 <b>Новое достижение!</b>\n" + "\n".join(ach_lines)
+
     await message.reply(
-        f"✅ <b>Отчёт принят!</b>\n\n{confirmation}\n\n"
+        f"✅ <b>Отчёт принят!</b>\n\n{confirmation}"
+        f"{ach_text}\n\n"
         f"📊 <a href='{settings.app_url}'>Моя статистика</a>"
     )

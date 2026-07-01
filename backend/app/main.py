@@ -3,10 +3,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.api import auth, users, reports, stats, admin, payments, subscriptions
+from app.api import auth, users, reports, stats, admin
+from app.database import async_session
+from app.services.achievements import seed_achievements
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    async with async_session() as db:
+        await seed_achievements(db)
     yield
 
 app = FastAPI(title="WorldRun API", lifespan=lifespan)
@@ -26,6 +30,7 @@ app.include_router(stats.router)
 app.include_router(admin.router)
 app.include_router(payments.router)
 app.include_router(subscriptions.router)
+app.include_router(achievements.router)
 
 @app.get("/health")
 async def health():

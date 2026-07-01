@@ -6,13 +6,14 @@ from app.database import get_db
 from app.models.user import User
 from app.models.report import Report, ExerciseType, ReportStatus
 from app.models.streak import Streak
-from app.schemas.report import ReportCreate, ReportResponse, ReportStats
+from app.schemas.report import ReportCreate, ReportStats
 from app.api.users import get_current_user
 from app.services.streak import update_streak
+from app.services.achievements import check_achievements
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
-@router.post("", response_model=ReportResponse)
+@router.post("")
 async def create_report(data: ReportCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     report = Report(
         user_id=user.id,
@@ -26,7 +27,18 @@ async def create_report(data: ReportCreate, user: User = Depends(get_current_use
     await update_streak(user.id, db)
     await db.commit()
     await db.refresh(report)
-    return report
+    new_ach = await check_achievements(user.id, db)
+    return {
+        "id": str(report.id),
+        "exercise_type": report.exercise_type.value,
+        "value": report.value,
+        "report_date": str(report.report_date),
+        "status": report.status.value,
+        "created_at": report.created_at.isoformat(),
+        "new_achievements": [
+            {"slug": a.slug, "title": a.title, "icon": a.icon} for a in new_ach
+        ] if new_ach else [],
+    }
 
 @router.get("/stats", response_model=ReportStats)
 async def get_stats(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):

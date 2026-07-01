@@ -3,13 +3,14 @@ import { useAuth } from '../hooks/useAuth'
 import { logout as apiLogout } from '../api/auth'
 import { 
   LayoutDashboard, BarChart3, CreditCard, Shield, LogOut,
-  Menu, X, Dumbbell
+  Menu, X, Dumbbell, Trophy
 } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
   { path: '/', label: 'Дашборд', icon: LayoutDashboard },
   { path: '/stats', label: 'Статистика', icon: BarChart3 },
+  { path: '/achievements', label: 'Ачивки', icon: Trophy },
   { path: '/subscription', label: 'Подписка', icon: CreditCard },
 ]
 
