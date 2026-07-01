@@ -24,6 +24,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://worldrun:${DB_PASSWORD:-worldrun}@db:5432/worldrun
       BOT_TOKEN: ${BOT_TOKEN}
+      TELEGRAM_CLIENT_ID: ${TELEGRAM_CLIENT_ID}
+      TELEGRAM_CLIENT_SECRET: ${TELEGRAM_CLIENT_SECRET}
       CHANNEL_ID: ${CHANNEL_ID}
       GROUP_ID: ${GROUP_ID}
       DOMAIN: ${DOMAIN}
@@ -43,6 +45,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://worldrun:${DB_PASSWORD:-worldrun}@db:5432/worldrun
       BOT_TOKEN: ${BOT_TOKEN}
+      TELEGRAM_CLIENT_ID: ${TELEGRAM_CLIENT_ID}
+      TELEGRAM_CLIENT_SECRET: ${TELEGRAM_CLIENT_SECRET}
       CHANNEL_ID: ${CHANNEL_ID}
       GROUP_ID: ${GROUP_ID}
       DOMAIN: ${DOMAIN}

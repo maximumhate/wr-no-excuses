@@ -3,6 +3,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://worldrun:worldrun@db:5432/worldrun"
     bot_token: str = ""
+    telegram_client_id: str = ""
+    telegram_client_secret: str = ""
     channel_id: str = "@wr_no_excuses"
     group_id: str = ""
     domain: str = "wr.idigeneri.ru"

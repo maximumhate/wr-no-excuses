@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings
 
 class BotSettings(BaseSettings):
     bot_token: str = ""
+    telegram_client_id: str = ""
+    telegram_client_secret: str = ""
     database_url: str = "postgresql+asyncpg://worldrun:worldrun@db:5432/worldrun"
     channel_id: str = "@wr_no_excuses"
     group_id: str = ""
