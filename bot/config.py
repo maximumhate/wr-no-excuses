@@ -16,6 +16,13 @@ class BotSettings(BaseSettings):
     def admin_ids_list(self) -> list[int]:
         return [int(x.strip()) for x in self.admin_ids.split(",") if x.strip()]
 
+    @property
+    def group_id_int(self) -> int | None:
+        try:
+            return int(self.group_id) if self.group_id else None
+        except ValueError:
+            return None
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 settings = BotSettings()

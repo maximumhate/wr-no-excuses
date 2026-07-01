@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
-import { Search, Trophy, Flame, Dumbbell, Target, Eye, TrendingUp, Zap } from 'lucide-react'
+import { Search, Trophy } from 'lucide-react'
 
 interface LeaderboardEntry {
   telegram_id: number
@@ -22,11 +22,11 @@ const medalBg = ['bg-yellow-500/10', 'bg-gray-300/10', 'bg-amber-600/10']
 
 const EXERCISE_OPTIONS = [
   { value: '', label: 'Все упражнения' },
-  { value: 'pushups', label: '💪 Отжимания' },
-  { value: 'squats', label: '🦵 Приседания' },
-  { value: 'plank', label: '🧘 Планка' },
-  { value: 'pullups', label: '🏋️ Подтягивания' },
-  { value: 'abs', label: '🔥 Пресс' },
+  { value: 'pushups', label: 'Отжимания' },
+  { value: 'squats', label: 'Приседания' },
+  { value: 'plank', label: 'Планка' },
+  { value: 'pullups', label: 'Подтягивания' },
+  { value: 'abs', label: 'Пресс' },
 ]
 
 const PERIOD_OPTIONS = [
@@ -126,13 +126,13 @@ export default function Stats() {
               <tr className="text-gray-500 border-b border-gray-800/50 text-xs">
                 <th className="text-left p-3 font-medium">#</th>
                 <th className="text-left p-3 font-medium">Имя</th>
-                <th className="text-right p-3 font-medium">💪</th>
-                <th className="text-right p-3 font-medium">🦵</th>
-                <th className="text-right p-3 font-medium">🧘</th>
-                <th className="text-right p-3 font-medium">🏋️</th>
-                <th className="text-right p-3 font-medium">🔥</th>
-                <th className="text-right p-3 font-medium">📊</th>
-                <th className="text-right p-3 font-medium"><Flame className="w-3 h-3 inline text-orange-400" /></th>
+                <th className="text-right p-3 font-medium">Отж.</th>
+                <th className="text-right p-3 font-medium">Прис.</th>
+                <th className="text-right p-3 font-medium">План.</th>
+                <th className="text-right p-3 font-medium">Подт.</th>
+                <th className="text-right p-3 font-medium">Пресс</th>
+                <th className="text-right p-3 font-medium">Отч.</th>
+                <th className="text-right p-3 font-medium">Стрик</th>
               </tr>
             </thead>
             <tbody>

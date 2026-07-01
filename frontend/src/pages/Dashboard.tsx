@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../api/client'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { Flame, Trophy, Activity, Dumbbell, Target, Eye, TrendingUp, Zap } from 'lucide-react'
+import { Flame, Trophy, Activity, Dumbbell, Target, Eye, TrendingUp, Zap, Calendar } from 'lucide-react'
 
 interface Stats {
   total_pushups: number
@@ -38,23 +38,38 @@ const LABEL_MAP: Record<string, string> = {
   abs: 'Пресс',
 }
 
-const EMOJI_MAP: Record<string, string> = {
-  pushups: '💪',
-  squats: '🦵',
-  plank: '🧘',
-  pullups: '🏋️',
-  abs: '🔥',
+function getWeekRange() {
+  const now = new Date()
+  const day = now.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(now)
+  monday.setDate(now.getDate() + diff)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = (d: Date) => d.toISOString().slice(0, 10)
+  return { week_start: fmt(monday), week_end: fmt(sunday) }
 }
 
 export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
   const [history, setHistory] = useState<Report[]>([])
+  const [weekMode, setWeekMode] = useState(true)
+
+  const fetchData = useCallback(async () => {
+    const params = new URLSearchParams()
+    if (weekMode) {
+      const { week_start, week_end } = getWeekRange()
+      params.set('week_start', week_start)
+      params.set('week_end', week_end)
+    }
+    api.get<Stats>(`/reports/stats?${params}`).then(setStats).catch(console.error)
+    api.get<Report[]>('/reports/history?limit=30').then(setHistory).catch(console.error)
+  }, [weekMode])
 
   useEffect(() => {
-    api.get<Stats>('/reports/stats').then(setStats).catch(console.error)
-    api.get<Report[]>('/reports/history?limit=30').then(setHistory).catch(console.error)
-  }, [])
+    fetchData()
+  }, [fetchData])
 
   const isParticipant = user?.is_participant
 
@@ -77,10 +92,21 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white">
-            Привет, {user?.first_name || 'чемпион'}! 👋
+            Привет, {user?.first_name || 'чемпион'}!
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">Твой фитнес-челлендж</p>
         </div>
+        <button
+          onClick={() => setWeekMode(w => !w)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            weekMode
+              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+              : 'bg-gray-800/50 text-gray-400 border border-gray-700/50'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          {weekMode ? 'Неделя' : 'Всё время'}
+        </button>
       </div>
 
       {!isParticipant && (
@@ -177,10 +203,7 @@ export default function Dashboard() {
                   <tr key={r.id} className="border-b border-gray-800/50 text-gray-300 hover:bg-gray-800/30 transition-colors">
                     <td className="p-2 text-gray-400 text-xs">{r.report_date}</td>
                     <td className="p-2">
-                      <span className="flex items-center gap-1.5">
-                        {EMOJI_MAP[r.exercise_type] || '✅'}
-                        {LABEL_MAP[r.exercise_type] || r.exercise_type}
-                      </span>
+                      {LABEL_MAP[r.exercise_type] || r.exercise_type}
                     </td>
                     <td className="p-2 text-right font-medium text-white">
                       {r.value}{r.exercise_type === 'plank' ? ' сек' : ''}

@@ -1,11 +1,12 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { logout as apiLogout } from '../api/auth'
+import { adminMe, adminLogout as apiAdminLogout } from '../api/adminAuth'
 import {
   LayoutDashboard, BarChart3, CreditCard, Shield, LogOut,
-  Dumbbell, Trophy, Menu, X, Users, Send, FileText
+  Dumbbell, Trophy, Users, Send, FileText
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const navItems = [
   { path: '/', label: 'Дашборд', icon: LayoutDashboard },
@@ -39,9 +40,18 @@ export default function Layout() {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [adminSession, setAdminSession] = useState(false)
+
+  useEffect(() => {
+    adminMe().then(() => setAdminSession(true)).catch(() => setAdminSession(false))
+  }, [location.pathname])
+
+  const isAdmin = user?.is_admin || adminSession
 
   const handleLogout = async () => {
+    if (adminSession) {
+      await apiAdminLogout()
+    }
     await apiLogout()
     logout()
     navigate('/login')
@@ -70,7 +80,7 @@ export default function Layout() {
                 {item.label}
               </Link>
             ))}
-            {user?.is_admin && adminItems.map(item => (
+            {isAdmin && adminItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -110,7 +120,7 @@ export default function Layout() {
               active={location.pathname === item.path}
             />
           ))}
-          {user?.is_admin && (
+          {isAdmin && (
             <NavLink
               to="/admin"
               icon={Shield}

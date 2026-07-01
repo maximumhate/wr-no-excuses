@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, timedelta
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
@@ -11,10 +11,14 @@ from app.models.streak import Streak
 from app.models.broadcast import Broadcast
 from app.schemas.user import UserResponse, UserUpdate
 from app.api.users import get_current_user
+from app.api.admin_auth import get_current_admin, ADMIN_SESSION_COOKIE
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-async def require_admin(user: User = Depends(get_current_user)) -> User:
+async def require_admin(request: Request, db: AsyncSession = Depends(get_db)):
+    if request.cookies.get(ADMIN_SESSION_COOKIE):
+        return await get_current_admin(request, db)
+    user = await get_current_user(request, db)
     if not user.is_admin:
         raise HTTPException(403, "Admin access required")
     return user

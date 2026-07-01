@@ -6,8 +6,9 @@ from app.models.subscription import Subscription
 from app.models.achievement import Achievement, UserAchievement
 from app.models.broadcast import Broadcast
 from app.models.payment import Payment
+from app.models.admin_user import AdminUser
 
 __all__ = [
     "Base", "User", "Report", "Streak", "Subscription",
-    "Achievement", "UserAchievement", "Broadcast", "Payment",
+    "Achievement", "UserAchievement", "Broadcast", "Payment", "AdminUser",
 ]

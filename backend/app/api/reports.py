@@ -1,7 +1,7 @@
-from datetime import date, timedelta
-from fastapi import APIRouter, HTTPException, Depends, Request
+from datetime import date, timedelta, datetime
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from app.database import get_db
 from app.models.user import User
 from app.models.report import Report, ExerciseType, ReportStatus
@@ -44,20 +44,39 @@ async def create_report(data: ReportCreate, user: User = Depends(get_current_use
     }
 
 @router.get("/stats", response_model=ReportStats)
-async def get_stats(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def get_stats(
+    user: User = Depends(get_current_user),
+    week_start: str | None = Query(None),
+    week_end: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    base_filter = and_(Report.user_id == user.id, Report.status == ReportStatus.approved)
+    if week_start:
+        try:
+            ws = datetime.strptime(week_start, "%Y-%m-%d").date()
+            base_filter = and_(base_filter, Report.report_date >= ws)
+        except ValueError:
+            pass
+    if week_end:
+        try:
+            we = datetime.strptime(week_end, "%Y-%m-%d").date()
+            base_filter = and_(base_filter, Report.report_date <= we)
+        except ValueError:
+            pass
+
     totals = await db.execute(
         select(
-            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pushups, Report.status == ReportStatus.approved), 0),
-            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.squats, Report.status == ReportStatus.approved), 0),
-            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.plank, Report.status == ReportStatus.approved), 0),
-            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pullups, Report.status == ReportStatus.approved), 0),
-            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.abs, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(and_(Report.exercise_type == ExerciseType.pushups, base_filter)), 0),
+            func.coalesce(func.sum(Report.value).filter(and_(Report.exercise_type == ExerciseType.squats, base_filter)), 0),
+            func.coalesce(func.sum(Report.value).filter(and_(Report.exercise_type == ExerciseType.plank, base_filter)), 0),
+            func.coalesce(func.sum(Report.value).filter(and_(Report.exercise_type == ExerciseType.pullups, base_filter)), 0),
+            func.coalesce(func.sum(Report.value).filter(and_(Report.exercise_type == ExerciseType.abs, base_filter)), 0),
         )
     )
     pushup_total, squat_total, plank_total, pullup_total, abs_total = totals.one()
 
     count = await db.execute(
-        select(func.count(Report.id)).where(Report.user_id == user.id, Report.status == ReportStatus.approved)
+        select(func.count(Report.id)).where(base_filter)
     )
     total_reports = count.scalar()
 

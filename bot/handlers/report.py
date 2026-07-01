@@ -1,6 +1,5 @@
 import re
 import logging
-from datetime import date, datetime
 from aiogram import Router, types
 from aiogram.types import Message
 from bot.config import settings
@@ -21,7 +20,17 @@ EXERCISE_PATTERNS = {
 async def handle_report(message: Message):
     if message.chat.type not in ("group", "supergroup"):
         return
+
+    group_id = settings.group_id_int
+    if group_id and message.chat.id != group_id:
+        return
+
     if not message.text:
+        if group_id and message.chat.id == group_id:
+            try:
+                await message.delete()
+            except Exception:
+                pass
         return
 
     text = message.text.strip()
@@ -39,6 +48,10 @@ async def handle_report(message: Message):
                 continue
 
     if not exercises_found:
+        try:
+            await message.delete()
+        except Exception as e:
+            logger.warning(f"Could not delete message: {e}")
         return
 
     api = ApiClient()
@@ -69,8 +82,8 @@ async def handle_report(message: Message):
         pass
 
     parts = []
-    emoji_map = {"pushups": "💪", "squats": "🦵", "plank": "🧘", "pullups": "🏋️", "abs": "🔥"}
     labels = {"pushups": "отжимания", "squats": "приседания", "plank": "планка", "pullups": "подтягивания", "abs": "пресс"}
+    emoji_map = {"pushups": "💪", "squats": "🦵", "plank": "🧘", "pullups": "🏋️", "abs": "🔥"}
     for ex_type, value in exercises_found.items():
         emoji = emoji_map.get(ex_type, "✅")
         label = labels.get(ex_type, ex_type)
