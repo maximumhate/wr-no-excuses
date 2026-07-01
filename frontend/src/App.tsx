@@ -1,0 +1,27 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+import Stats from './pages/Stats'
+import Subscription from './pages/Subscription'
+import AdminDashboard from './pages/Admin/Dashboard'
+import AdminUsers from './pages/Admin/Users'
+import AdminBroadcast from './pages/Admin/Broadcast'
+import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route index element={<Dashboard />} />
+        <Route path="stats" element={<Stats />} />
+        <Route path="subscription" element={<Subscription />} />
+        <Route path="admin" element={<AdminDashboard />} />
+        <Route path="admin/users" element={<AdminUsers />} />
+        <Route path="admin/broadcast" element={<AdminBroadcast />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}

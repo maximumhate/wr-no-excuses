@@ -1,0 +1,28 @@
+import uuid
+from datetime import date, datetime
+from pydantic import BaseModel
+from app.models.report import ExerciseType, ReportStatus
+
+class ReportCreate(BaseModel):
+    exercise_type: ExerciseType
+    value: int
+    report_date: date | None = None
+
+class ReportResponse(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    exercise_type: ExerciseType
+    value: int
+    report_date: date
+    status: ReportStatus
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+class ReportStats(BaseModel):
+    total_pushups: int = 0
+    total_squats: int = 0
+    total_plank_seconds: int = 0
+    total_reports: int = 0
+    current_streak: int = 0
+    longest_streak: int = 0
