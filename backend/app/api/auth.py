@@ -13,6 +13,31 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class AuthRequest(BaseModel):
     init_data: str
 
+class RegisterRequest(BaseModel):
+    telegram_id: int
+    username: str = ""
+    first_name: str = ""
+    last_name: str = ""
+
+@router.post("/register")
+async def register_bot(body: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    if request.headers.get("X-Bot-Secret") != settings.secret_key:
+        raise HTTPException(403, "Forbidden")
+    result = await db.execute(select(User).where(User.telegram_id == body.telegram_id))
+    user = result.scalar_one_or_none()
+    if user:
+        return {"ok": True, "user_id": str(user.id)}
+    user = User(
+        telegram_id=body.telegram_id,
+        username=body.username or None,
+        first_name=body.first_name or None,
+        last_name=body.last_name or None,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return {"ok": True, "user_id": str(user.id)}
+
 @router.post("/telegram")
 async def auth_telegram(body: AuthRequest, response: Response, db: AsyncSession = Depends(get_db)):
     data = verify_telegram_init_data(body.init_data)

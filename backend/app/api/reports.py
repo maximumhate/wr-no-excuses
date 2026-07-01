@@ -8,6 +8,7 @@ from app.models.report import Report, ExerciseType, ReportStatus
 from app.models.streak import Streak
 from app.schemas.report import ReportCreate, ReportResponse, ReportStats
 from app.api.users import get_current_user
+from app.services.streak import update_streak
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -21,6 +22,8 @@ async def create_report(data: ReportCreate, user: User = Depends(get_current_use
         status=ReportStatus.approved,
     )
     db.add(report)
+    await db.flush()
+    await update_streak(user.id, db)
     await db.commit()
     await db.refresh(report)
     return report

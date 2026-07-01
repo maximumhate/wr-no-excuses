@@ -9,6 +9,7 @@ from aiohttp import web
 
 from bot.config import settings
 from bot.handlers import start, report, subscription, admin
+from bot.services.scheduler import run_scheduler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,9 +26,10 @@ async def on_startup():
     await bot.set_webhook(f"{settings.app_url}/webhook/bot")
     await bot.set_my_commands([
         BotCommand(command="start", description="Главное меню"),
+        BotCommand(command="subscription", description="Подписки"),
         BotCommand(command="profile", description="Мой профиль"),
-        BotCommand(command="stats", description="Моя статистика"),
     ], scope=BotCommandScopeDefault())
+    asyncio.create_task(run_scheduler(bot))
 
 async def on_shutdown():
     await bot.delete_webhook()
