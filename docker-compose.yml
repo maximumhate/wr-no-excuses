@@ -56,7 +56,10 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_TELEGRAM_CLIENT_ID: ${TELEGRAM_CLIENT_ID}
     ports:
       - "127.0.0.1:5173:5173"
     networks:

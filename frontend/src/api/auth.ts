@@ -19,6 +19,11 @@ export async function loginWithTelegram(initData: string): Promise<User> {
   return res.user
 }
 
+export async function loginWithTelegramIdToken(idToken: string): Promise<User> {
+  const res = await api.post<{ ok: boolean; user: User }>('/auth/telegram', { id_token: idToken })
+  return res.user
+}
+
 export async function logout(): Promise<void> {
   await api.post('/auth/logout')
 }
