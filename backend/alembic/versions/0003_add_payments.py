@@ -20,7 +20,7 @@ def upgrade() -> None:
         "payments",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False, index=True),
-        sa.Column("plan", sa.Enum("basic", "silver", "gold", "platinum", name="plantype"), nullable=False),
+        sa.Column("plan", sa.String(16), nullable=False),
         sa.Column("amount", sa.Integer(), nullable=False),
         sa.Column("currency", sa.String(3), nullable=False, server_default=sa.text("'RUB'")),
         sa.Column("status", sa.Enum("pending", "succeeded", "cancelled", "failed", name="paymentstatus"), nullable=False, server_default=sa.text("'pending'")),
