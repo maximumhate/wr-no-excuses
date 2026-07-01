@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.api import auth, users, reports, stats, admin
+from app.api import auth, users, reports, stats, admin, payments, subscriptions, achievements
 from app.database import async_session
 from app.services.achievements import seed_achievements
 
