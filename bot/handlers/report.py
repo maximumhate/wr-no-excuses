@@ -13,6 +13,8 @@ EXERCISE_PATTERNS = {
     "pushups": re.compile(r"#отжимания\s+(\d+)", re.IGNORECASE),
     "squats": re.compile(r"#приседания\s+(\d+)", re.IGNORECASE),
     "plank": re.compile(r"#планка\s+(\d+)", re.IGNORECASE),
+    "pullups": re.compile(r"#подтягивания\s+(\d+)", re.IGNORECASE),
+    "abs": re.compile(r"#пресс\s+(\d+)", re.IGNORECASE),
 }
 
 @router.message()
@@ -67,8 +69,8 @@ async def handle_report(message: Message):
         pass
 
     parts = []
-    emoji_map = {"pushups": "💪", "squats": "🦵", "plank": "🧘"}
-    labels = {"pushups": "отжимания", "squats": "приседания", "plank": "планка"}
+    emoji_map = {"pushups": "💪", "squats": "🦵", "plank": "🧘", "pullups": "🏋️", "abs": "🔥"}
+    labels = {"pushups": "отжимания", "squats": "приседания", "plank": "планка", "pullups": "подтягивания", "abs": "пресс"}
     for ex_type, value in exercises_found.items():
         emoji = emoji_map.get(ex_type, "✅")
         label = labels.get(ex_type, ex_type)

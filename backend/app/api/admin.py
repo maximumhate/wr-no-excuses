@@ -94,9 +94,11 @@ async def admin_get_user(user_id: uuid.UUID, admin: User = Depends(require_admin
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pushups, Report.status == ReportStatus.approved), 0),
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.squats, Report.status == ReportStatus.approved), 0),
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.plank, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pullups, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.abs, Report.status == ReportStatus.approved), 0),
         ).where(Report.user_id == user_id)
     )
-    pushup_total, squat_total, plank_total = totals.one()
+    pushup_total, squat_total, plank_total, pullup_total, abs_total = totals.one()
     streak = await db.execute(select(Streak).where(Streak.user_id == user_id))
     s = streak.scalar_one_or_none()
     recent_raw = await db.execute(
@@ -104,7 +106,7 @@ async def admin_get_user(user_id: uuid.UUID, admin: User = Depends(require_admin
     )
     return {
         "user": user,
-        "totals": {"pushups": pushup_total or 0, "squats": squat_total or 0, "plank_seconds": plank_total or 0},
+        "totals": {"pushups": pushup_total or 0, "squats": squat_total or 0, "plank_seconds": plank_total or 0, "pullups": pullup_total or 0, "abs": abs_total or 0},
         "streak": {"current": s.current_streak if s else 0, "longest": s.longest_streak if s else 0},
         "recent_reports": recent_raw.scalars().all(),
     }

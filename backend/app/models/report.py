@@ -9,6 +9,8 @@ class ExerciseType(str, enum.Enum):
     pushups = "pushups"
     squats = "squats"
     plank = "plank"
+    pullups = "pullups"
+    abs = "abs"
 
 class ReportStatus(str, enum.Enum):
     pending = "pending"

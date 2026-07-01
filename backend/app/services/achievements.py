@@ -16,8 +16,10 @@ ACHIEVEMENT_DEFS: list[dict] = [
     {"slug": "streak_30", "title": "Железный", "description": "Достичь стрика в 30 дней", "icon": "💪"},
     {"slug": "pushups_1000", "title": "Отжимальщик", "description": "Суммарно 1 000 отжиманий", "icon": "🏋️"},
     {"slug": "squats_1000", "title": "Приседатель", "description": "Суммарно 1 000 приседаний", "icon": "🦵"},
+    {"slug": "pullups_1000", "title": "Турникмен", "description": "Суммарно 1 000 подтягиваний", "icon": "💪"},
+    {"slug": "abs_1000", "title": "Пресс-качок", "description": "Суммарно 1 000 раз пресс", "icon": "🔥"},
     {"slug": "plank_3600", "title": "Планкист", "description": "Суммарно 1 час планки", "icon": "🧘"},
-    {"slug": "triple", "title": "Универсал", "description": "Выполнить все 3 упражнения за один день", "icon": "🏆"},
+    {"slug": "triple", "title": "Универсал", "description": "Выполнить все 5 упражнений за один день", "icon": "🏆"},
     {"slug": "reports_100", "title": "Чемпион", "description": "100 одобренных отчётов", "icon": "👑"},
     {"slug": "platinum", "title": "Платиновый", "description": "Оформить Platinum подписку", "icon": "💎"},
 ]
@@ -59,10 +61,12 @@ async def check_achievements(user_id, db) -> list[Achievement]:
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pushups, Report.status == ReportStatus.approved), 0),
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.squats, Report.status == ReportStatus.approved), 0),
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.plank, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pullups, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.abs, Report.status == ReportStatus.approved), 0),
             func.count(Report.id).filter(Report.status == ReportStatus.approved),
         ).where(Report.user_id == user_id)
     )
-    pushup_total, squat_total, plank_total, total_reports = totals.one()
+    pushup_total, squat_total, plank_total, pullup_total, abs_total, total_reports = totals.one()
 
     streak_result = await db.execute(select(Streak).where(Streak.user_id == user_id))
     streak = streak_result.scalar_one_or_none()
@@ -77,6 +81,8 @@ async def check_achievements(user_id, db) -> list[Achievement]:
         ("streak_30", lambda: current_streak >= 30),
         ("pushups_1000", lambda: pushup_total >= 1000),
         ("squats_1000", lambda: squat_total >= 1000),
+        ("pullups_1000", lambda: pullup_total >= 1000),
+        ("abs_1000", lambda: abs_total >= 1000),
         ("plank_3600", lambda: plank_total >= 3600),
         ("reports_100", lambda: total_reports >= 100),
         ("platinum", lambda: sub is not None and sub.plan == PlanType.platinum and sub.is_active),
@@ -97,7 +103,7 @@ async def check_achievements(user_id, db) -> list[Achievement]:
         ).distinct()
     )
     done_today = {row[0] for row in today_ex.all()}
-    if len(done_today) >= 3:
+    if len(done_today) >= 5:
         ach = await award(user_id, "triple", db)
         if ach:
             new_achievements.append(ach)

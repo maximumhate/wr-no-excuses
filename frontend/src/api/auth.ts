@@ -10,6 +10,7 @@ export interface User {
   level: string | null
   is_admin: boolean
   is_active: boolean
+  is_participant: boolean
   registered_at: string
   last_active_at: string
 }

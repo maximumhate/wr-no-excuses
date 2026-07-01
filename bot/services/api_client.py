@@ -43,5 +43,22 @@ class ApiClient:
     async def complete_broadcast(self, broadcast_id: str):
         await self.client.patch(f"/api/admin/broadcast/{broadcast_id}/complete")
 
+    async def get_user_stats(self, user_uuid: str) -> dict | None:
+        resp = await self.client.get("/api/reports/stats", cookies={"session": user_uuid})
+        if resp.status_code == 200:
+            return resp.json()
+        return None
+
+    async def get_leaderboard(self, week_start: str = "", week_end: str = "") -> list[dict]:
+        params = {}
+        if week_start:
+            params["week_start"] = week_start
+        if week_end:
+            params["week_end"] = week_end
+        resp = await self.client.get("/api/stats/leaderboard", params=params)
+        if resp.status_code == 200:
+            return resp.json()
+        return []
+
     async def close(self):
         await self.client.aclose()

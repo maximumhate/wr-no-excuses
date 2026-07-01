@@ -8,7 +8,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 from bot.config import settings
-from bot.handlers import start, report, subscription, admin
+from bot.handlers import start, report, subscription, admin, stats
 from bot.services.scheduler import run_scheduler
 
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +21,7 @@ dp.include_router(start.router)
 dp.include_router(report.router)
 dp.include_router(subscription.router)
 dp.include_router(admin.router)
+dp.include_router(stats.router)
 
 async def on_startup():
     await bot.set_webhook(f"{settings.app_url}/webhook/bot")
@@ -28,6 +29,8 @@ async def on_startup():
         BotCommand(command="start", description="Главное меню"),
         BotCommand(command="subscription", description="Подписки"),
         BotCommand(command="profile", description="Мой профиль"),
+        BotCommand(command="mystats", description="Моя статистика"),
+        BotCommand(command="weekly", description="Топ недели"),
     ], scope=BotCommandScopeDefault())
     asyncio.create_task(run_scheduler(bot))
 

@@ -23,6 +23,8 @@ class ReportStats(BaseModel):
     total_pushups: int = 0
     total_squats: int = 0
     total_plank_seconds: int = 0
+    total_pullups: int = 0
+    total_abs: int = 0
     total_reports: int = 0
     current_streak: int = 0
     longest_streak: int = 0

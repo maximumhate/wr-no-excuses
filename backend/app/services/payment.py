@@ -1,6 +1,4 @@
 import uuid
-import hashlib
-import hmac
 import json
 import logging
 import httpx
@@ -14,63 +12,99 @@ PLAN_PRICES = {
     "platinum": 69900,
 }
 
-def is_yookassa_configured() -> bool:
-    return bool(settings.yookassa_shop_id and settings.yookassa_secret_key)
+def is_platega_configured() -> bool:
+    return bool(settings.platega_merchant_id and settings.platega_api_key)
 
 async def create_payment(
     user_id: uuid.UUID,
     plan: str,
     return_url: str,
 ) -> dict | None:
-    if not is_yookassa_configured():
-        logger.warning("YooKassa not configured")
+    if not is_platega_configured():
+        logger.warning("Platega not configured")
         return None
 
     price = PLAN_PRICES.get(plan)
     if not price:
         raise ValueError(f"Unknown plan: {plan}")
 
-    idempotence_key = str(uuid.uuid4())
+    order_id = str(uuid.uuid4())
+    headers = {
+        "X-MerchantId": settings.platega_merchant_id,
+        "X-Secret": settings.platega_api_key,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
     payload = {
-        "amount": {
-            "value": f"{price / 100:.2f}",
+        "paymentDetails": {
+            "amount": price,
             "currency": "RUB",
         },
-        "confirmation": {
-            "type": "redirect",
-            "return_url": return_url,
-        },
-        "capture": True,
-        "description": f"WorldRun {plan.capitalize()} — {price // 100} ₽/мес",
-    }
-
-    auth = httpx.BasicAuth(settings.yookassa_shop_id, settings.yookassa_secret_key)
-    headers = {
-        "Idempotence-Key": idempotence_key,
-        "Content-Type": "application/json",
+        "description": f"WorldRun {plan.capitalize()}",
+        "return": f"{return_url}?order_id={order_id}",
+        "failedUrl": f"{return_url}?order_id={order_id}&error=failed",
+        "payload": json.dumps({
+            "orderId": order_id,
+            "plan": plan,
+        }),
     }
 
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
-                "https://api.yookassa.ru/v3/payments",
+                f"{settings.platega_base_url}/v2/transaction/process",
                 json=payload,
                 headers=headers,
-                auth=auth,
                 timeout=30,
             )
             if resp.status_code not in (200, 201):
-                logger.error(f"YooKassa error: {resp.status_code} {resp.text}")
+                logger.error(f"Platega error: {resp.status_code} {resp.text}")
                 return None
             data = resp.json()
             return {
-                "id": data["id"],
-                "status": data["status"],
-                "confirmation_url": data["confirmation"]["confirmation_url"],
+                "id": data.get("transactionId") or data.get("id"),
+                "status": data.get("status", "pending"),
+                "confirmation_url": data.get("redirect") or data.get("url"),
+                "order_id": order_id,
             }
         except httpx.RequestError as e:
-            logger.error(f"YooKassa request failed: {e}")
+            logger.error(f"Platega request failed: {e}")
             return None
 
-def verify_webhook(body: bytes) -> bool:
-    return True  # IP whitelist in production
+async def get_payment_status(provider_payment_id: str) -> dict | None:
+    if not is_platega_configured():
+        return None
+
+    headers = {
+        "X-MerchantId": settings.platega_merchant_id,
+        "X-Secret": settings.platega_api_key,
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{settings.platega_base_url}/transaction/{provider_payment_id}",
+                headers=headers,
+                timeout=30,
+            )
+            if resp.status_code != 200:
+                logger.error(f"Platega status error: {resp.status_code} {resp.text}")
+                return None
+            return resp.json()
+        except httpx.RequestError as e:
+            logger.error(f"Platega status request failed: {e}")
+            return None
+
+def verify_webhook(request_headers: dict, body: bytes | None = None) -> bool:
+    merchant_id = request_headers.get("x-merchantid") or request_headers.get("x-merchant-id") or ""
+    secret = request_headers.get("x-secret") or ""
+    if merchant_id or secret:
+        if (
+            merchant_id != settings.platega_merchant_id
+            or secret != settings.platega_api_key
+        ):
+            logger.warning("Platega webhook credentials mismatch")
+            return False
+        return True
+    return True

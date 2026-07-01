@@ -15,6 +15,9 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 @router.post("")
 async def create_report(data: ReportCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if not user.is_participant:
+        raise HTTPException(403, "Зарегистрируйтесь в боте через /start для участия в челлендже")
+
     report = Report(
         user_id=user.id,
         exercise_type=data.exercise_type,
@@ -47,9 +50,11 @@ async def get_stats(user: User = Depends(get_current_user), db: AsyncSession = D
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pushups, Report.status == ReportStatus.approved), 0),
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.squats, Report.status == ReportStatus.approved), 0),
             func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.plank, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.pullups, Report.status == ReportStatus.approved), 0),
+            func.coalesce(func.sum(Report.value).filter(Report.exercise_type == ExerciseType.abs, Report.status == ReportStatus.approved), 0),
         )
     )
-    pushup_total, squat_total, plank_total = totals.one()
+    pushup_total, squat_total, plank_total, pullup_total, abs_total = totals.one()
 
     count = await db.execute(
         select(func.count(Report.id)).where(Report.user_id == user.id, Report.status == ReportStatus.approved)
@@ -63,6 +68,8 @@ async def get_stats(user: User = Depends(get_current_user), db: AsyncSession = D
         total_pushups=pushup_total or 0,
         total_squats=squat_total or 0,
         total_plank_seconds=plank_total or 0,
+        total_pullups=pullup_total or 0,
+        total_abs=abs_total or 0,
         total_reports=total_reports or 0,
         current_streak=s.current_streak if s else 0,
         longest_streak=s.longest_streak if s else 0,

@@ -4,4 +4,33 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-gray-900/80 backdrop-blur-sm border border-gray-800/50;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:border-gray-700/50 hover:shadow-lg hover:shadow-black/10;
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+  }
+  .gradient-border {
+    @apply border border-transparent bg-gradient-to-b from-gray-800 to-gray-800/50;
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+}
+
+@media (max-width: 768px) {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

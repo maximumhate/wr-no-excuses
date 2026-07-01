@@ -21,7 +21,7 @@ class Payment(Base):
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="RUB")
     status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus), default=PaymentStatus.pending)
-    yookassa_id: Mapped[str | None] = mapped_column(String(128), unique=True)
+    provider_payment_id: Mapped[str | None] = mapped_column(String(128), unique=True)
     confirmation_url: Mapped[str | None] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

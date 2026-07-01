@@ -9,8 +9,9 @@ class Settings(BaseSettings):
     group_id: str = ""
     domain: str = "wr.idigeneri.ru"
     app_url: str = "https://wr.idigeneri.ru"
-    yookassa_shop_id: str = ""
-    yookassa_secret_key: str = ""
+    platega_merchant_id: str = ""
+    platega_api_key: str = ""
+    platega_base_url: str = "https://app.platega.io"
     admin_ids: str = ""
     secret_key: str = "change-me"
 
