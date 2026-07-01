@@ -6,7 +6,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.report import Report, ExerciseType, ReportStatus
 from app.models.streak import Streak
-from app.schemas.report import ReportCreate, ReportStats
+from app.schemas.report import ReportCreate, ReportResponse, ReportStats
 from app.api.users import get_current_user
 from app.services.streak import update_streak
 from app.services.achievements import check_achievements
