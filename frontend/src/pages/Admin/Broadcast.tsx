@@ -10,8 +10,8 @@ export default function AdminBroadcast() {
     if (!text.trim()) return
     setSending(true)
     try {
-      await api.post('/admin/broadcast', { text })
-      setResult('✅ Рассылка отправлена')
+      const res = await api.post<{ ok: boolean; message: string }>('/admin/broadcast', { text })
+      setResult(`✅ ${res.message}`)
       setText('')
     } catch {
       setResult('❌ Ошибка отправки')
@@ -21,11 +21,11 @@ export default function AdminBroadcast() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Рассылка</h1>
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-lg">
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Рассылка</h1>
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-lg space-y-4">
         <textarea
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white mb-4 h-32"
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white h-32 resize-none"
           placeholder="Текст рассылки..."
           value={text}
           onChange={e => setText(e.target.value)}
@@ -35,9 +35,9 @@ export default function AdminBroadcast() {
           disabled={sending || !text.trim()}
           className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg font-medium transition-colors"
         >
-          {sending ? 'Отправка...' : 'Отправить'}
+          {sending ? 'Отправка...' : 'Отправить всем'}
         </button>
-        {result && <p className="mt-4 text-sm text-gray-400">{result}</p>}
+        {result && <p className="text-sm text-gray-400">{result}</p>}
       </div>
     </div>
   )

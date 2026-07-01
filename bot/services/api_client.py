@@ -28,5 +28,20 @@ class ApiClient:
             return resp.json()
         return None
 
+    async def get_pending_broadcasts(self) -> list[dict]:
+        resp = await self.client.get("/api/admin/broadcast/pending")
+        if resp.status_code == 200:
+            return resp.json()
+        return []
+
+    async def get_all_users(self) -> list[dict]:
+        resp = await self.client.get("/api/admin/users?limit=9999")
+        if resp.status_code == 200:
+            return resp.json()
+        return []
+
+    async def complete_broadcast(self, broadcast_id: str):
+        await self.client.patch(f"/api/admin/broadcast/{broadcast_id}/complete")
+
     async def close(self):
         await self.client.aclose()

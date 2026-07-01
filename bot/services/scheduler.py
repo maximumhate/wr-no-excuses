@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, time, timedelta, timezone
 from aiogram import Bot
 from bot.config import settings
+from bot.services.api_client import ApiClient
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,36 @@ async def daily_post(bot: Bot):
 async def evening_reminder(bot: Bot):
     """Send reminders at 20:00 MSK to users who haven't reported today."""
     logger.info("Evening reminder placeholder — API integration TBD")
+
+async def process_pending_broadcasts(bot: Bot):
+    """Poll backend for pending broadcasts and send them."""
+    api = ApiClient()
+    try:
+        broadcasts = await api.get_pending_broadcasts()
+        for b in broadcasts:
+            b_id = b["id"]
+            text = b["text"]
+            total = b["total_users"]
+            logger.info(f"Processing broadcast {b_id} to {total} users")
+
+            users = await api.get_all_users()
+            sent = 0
+            for user in users:
+                tg_id = user.get("telegram_id")
+                if not tg_id:
+                    continue
+                try:
+                    await bot.send_message(chat_id=tg_id, text=text)
+                    sent += 1
+                except Exception as e:
+                    logger.warning(f"Failed to send to {tg_id}: {e}")
+
+            await api.complete_broadcast(b_id)
+            logger.info(f"Broadcast {b_id} done: {sent}/{total} sent")
+    except Exception as e:
+        logger.error(f"Broadcast polling failed: {e}")
+    finally:
+        await api.close()
 
 async def run_scheduler(bot: Bot):
     post_time = time(21, 1)  # 00:01 MSK = 21:01 UTC (summer) / adjust as needed
@@ -41,3 +72,9 @@ async def run_scheduler(bot: Bot):
             await evening_reminder(bot)
         except Exception as e:
             logger.error(f"Reminder failed: {e}")
+
+        # Check for pending broadcasts every cycle
+        try:
+            await process_pending_broadcasts(bot)
+        except Exception as e:
+            logger.error(f"Broadcast check failed: {e}")
