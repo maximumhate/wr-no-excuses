@@ -55,7 +55,14 @@ services:
     build: ./frontend
     ports:
       - "127.0.0.1:5173:5173"
+    networks:
+      - default
+      - web
     restart: unless-stopped
 
 volumes:
   pgdata:
+
+networks:
+  web:
+    external: true
