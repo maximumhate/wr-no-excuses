@@ -5,18 +5,17 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, func, or_, select, text
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.admin_auth import get_current_admin
 from app.config import settings
 from app.database import get_db
-from app.models.achievement import Achievement, UserAchievement
 from app.models.admin_user import AdminUser
 from app.models.broadcast import Broadcast, BroadcastDelivery
 from app.models.challenge import ChallengeRegistration, ChallengeRegistrationExercise
 from app.models.cms import BotText, SubscriptionTariff
-from app.models.difficulty import ExerciseDifficultyRule, UserExerciseDifficulty
+from app.models.difficulty import UserExerciseDifficulty
 from app.models.report import ExerciseType, Report, ReportStatus
 from app.models.streak import Streak
 from app.models.subscription import Subscription
@@ -24,7 +23,7 @@ from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.achievements import check_achievements
 from app.services.challenges import ensure_current_challenge, serialize_challenge
-from app.services.exercises import EXERCISE_TYPES, EXERCISES, get_exercise_label
+from app.services.exercises import get_exercise_label
 from app.services.streak import update_streak
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -66,18 +65,6 @@ def serialize_tariff(tariff: SubscriptionTariff) -> dict:
     }
 
 
-def serialize_achievement(achievement: Achievement) -> dict:
-    return {
-        "id": str(achievement.id),
-        "slug": achievement.slug,
-        "title": achievement.title,
-        "description": achievement.description,
-        "icon": achievement.icon,
-        "is_active": achievement.is_active,
-        "sort_order": achievement.sort_order,
-    }
-
-
 def serialize_bot_text(item: BotText) -> dict:
     return {
         "id": str(item.id),
@@ -86,22 +73,6 @@ def serialize_bot_text(item: BotText) -> dict:
         "category": item.category,
         "text": item.text,
         "is_active": item.is_active,
-    }
-
-
-def serialize_rule(rule: ExerciseDifficultyRule) -> dict:
-    return {
-        "id": str(rule.id),
-        "exercise_type": rule.exercise_type,
-        "exercise_label": get_exercise_label(rule.exercise_type),
-        "difficulty": rule.difficulty,
-        "title": rule.title,
-        "description": rule.description,
-        "min_value": rule.min_value,
-        "max_value": rule.max_value,
-        "unit": rule.unit,
-        "sort_order": rule.sort_order,
-        "is_active": rule.is_active,
     }
 
 
@@ -356,62 +327,6 @@ async def admin_update_report(report_id: uuid.UUID, data: ReportUpdate, admin: A
     return report
 
 
-class AchievementBody(BaseModel):
-    slug: str = Field(min_length=1, max_length=64)
-    title: str = Field(min_length=1, max_length=256)
-    description: str | None = None
-    icon: str | None = None
-    is_active: bool = True
-    sort_order: int = 0
-
-
-class AchievementPatch(BaseModel):
-    slug: str | None = None
-    title: str | None = None
-    description: str | None = None
-    icon: str | None = None
-    is_active: bool | None = None
-    sort_order: int | None = None
-
-
-@router.get("/achievements")
-async def admin_achievements(admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Achievement).order_by(Achievement.sort_order, Achievement.slug))
-    return [serialize_achievement(a) for a in result.scalars().all()]
-
-
-@router.post("/achievements")
-async def admin_create_achievement(data: AchievementBody, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    achievement = Achievement(**data.model_dump())
-    db.add(achievement)
-    await db.commit()
-    await db.refresh(achievement)
-    return serialize_achievement(achievement)
-
-
-@router.patch("/achievements/{achievement_id}")
-async def admin_update_achievement(achievement_id: uuid.UUID, data: AchievementPatch, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    achievement = await db.get(Achievement, achievement_id)
-    if not achievement:
-        raise HTTPException(404, "Achievement not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(achievement, field, value)
-    await db.commit()
-    await db.refresh(achievement)
-    return serialize_achievement(achievement)
-
-
-@router.delete("/achievements/{achievement_id}")
-async def admin_delete_achievement(achievement_id: uuid.UUID, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    achievement = await db.get(Achievement, achievement_id)
-    if not achievement:
-        raise HTTPException(404, "Achievement not found")
-    await db.execute(delete(UserAchievement).where(UserAchievement.achievement_id == achievement_id))
-    await db.delete(achievement)
-    await db.commit()
-    return {"ok": True}
-
-
 class TariffBody(BaseModel):
     plan: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=128)
@@ -524,67 +439,6 @@ async def admin_delete_bot_text(item_id: uuid.UUID, admin: AdminUser = Depends(r
     if not item:
         raise HTTPException(404, "Bot text not found")
     await db.delete(item)
-    await db.commit()
-    return {"ok": True}
-
-
-class DifficultyRuleBody(BaseModel):
-    exercise_type: str
-    difficulty: str
-    title: str
-    description: str | None = None
-    min_value: int | None = None
-    max_value: int | None = None
-    unit: str = "раз"
-    sort_order: int = 0
-    is_active: bool = True
-
-
-class DifficultyRulePatch(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    min_value: int | None = None
-    max_value: int | None = None
-    unit: str | None = None
-    sort_order: int | None = None
-    is_active: bool | None = None
-
-
-@router.get("/difficulty-rules")
-async def admin_difficulty_rules(admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ExerciseDifficultyRule).order_by(ExerciseDifficultyRule.exercise_type, ExerciseDifficultyRule.sort_order))
-    return {"exercises": EXERCISES, "rules": [serialize_rule(rule) for rule in result.scalars().all()]}
-
-
-@router.post("/difficulty-rules")
-async def admin_create_difficulty_rule(data: DifficultyRuleBody, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    if data.exercise_type not in EXERCISE_TYPES:
-        raise HTTPException(400, "Unknown exercise")
-    rule = ExerciseDifficultyRule(**data.model_dump())
-    db.add(rule)
-    await db.commit()
-    await db.refresh(rule)
-    return serialize_rule(rule)
-
-
-@router.patch("/difficulty-rules/{rule_id}")
-async def admin_update_difficulty_rule(rule_id: uuid.UUID, data: DifficultyRulePatch, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    rule = await db.get(ExerciseDifficultyRule, rule_id)
-    if not rule:
-        raise HTTPException(404, "Rule not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(rule, field, value)
-    await db.commit()
-    await db.refresh(rule)
-    return serialize_rule(rule)
-
-
-@router.delete("/difficulty-rules/{rule_id}")
-async def admin_delete_difficulty_rule(rule_id: uuid.UUID, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
-    rule = await db.get(ExerciseDifficultyRule, rule_id)
-    if not rule:
-        raise HTTPException(404, "Rule not found")
-    await db.delete(rule)
     await db.commit()
     return {"ok": True}
 

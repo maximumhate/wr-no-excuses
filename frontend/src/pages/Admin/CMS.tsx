@@ -3,18 +3,15 @@ import type { ReactNode } from 'react'
 import { api } from '../../api/client'
 import { Plus, Save, Trash2 } from 'lucide-react'
 
-interface Achievement { id: string; slug: string; title: string; description: string | null; icon: string | null; is_active: boolean; sort_order: number }
 interface Tariff { id: string; plan: string; name: string; price: number; currency: string; period: string; features: string[]; accent: string | null; is_active: boolean; sort_order: number }
 interface BotText { id: string; key: string; title: string; category: string; text: string; is_active: boolean }
 
 export default function AdminCMS() {
-  const [achievements, setAchievements] = useState<Achievement[]>([])
   const [tariffs, setTariffs] = useState<Tariff[]>([])
   const [texts, setTexts] = useState<BotText[]>([])
   const [status, setStatus] = useState('')
 
   const loadAll = () => {
-    api.get<Achievement[]>('/admin/achievements').then(setAchievements)
     api.get<Tariff[]>('/admin/tariffs').then(setTariffs)
     api.get<BotText[]>('/admin/bot-texts').then(setTexts)
   }
@@ -27,16 +24,9 @@ export default function AdminCMS() {
     <div className="space-y-6">
       <div className="neo-card panel-line p-5">
         <h1 className="font-display text-3xl text-foreground">CMS</h1>
-        <p className="text-sm text-muted-foreground">Редактируемые тексты, ачивки и тарифы</p>
+        <p className="text-sm text-muted-foreground">Редактируемые тарифы и тексты бота</p>
       </div>
       {status && <div className="neo-card p-3 text-success text-sm">{status}</div>}
-
-      <Section title="Ачивки">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {achievements.map(item => <AchievementEditor key={item.id} item={item} onChange={next => setAchievements(p => p.map(x => x.id === next.id ? next : x))} onSave={async () => { await api.patch(`/admin/achievements/${item.id}`, item); ok('Ачивка сохранена') }} onDelete={async () => { await api.delete(`/admin/achievements/${item.id}`); setAchievements(p => p.filter(x => x.id !== item.id)) }} />)}
-        </div>
-        <p className="text-sm text-muted-foreground mt-3">Новые ачивки добавляются только в коде вместе с условием выдачи.</p>
-      </Section>
 
       <Section title="Тарифы">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -62,10 +52,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Actions({ onSave, onDelete }: { onSave: () => void; onDelete: () => void }) {
   return <div className="flex gap-2"><button className="btn-primary" onClick={onSave}><Save className="w-4 h-4" /> Сохранить</button><button className="btn-ghost text-danger" onClick={onDelete}><Trash2 className="w-4 h-4" /> Удалить</button></div>
-}
-
-function AchievementEditor({ item, onChange, onSave, onDelete }: { item: Achievement; onChange: (x: Achievement) => void; onSave: () => void; onDelete: () => void }) {
-  return <div className="stat-tile space-y-2"><div className="grid grid-cols-2 gap-2"><input className="control" value={item.slug} onChange={e => onChange({...item, slug: e.target.value})} /><input className="control" value={item.icon || ''} onChange={e => onChange({...item, icon: e.target.value})} /></div><input className="control w-full" value={item.title} onChange={e => onChange({...item, title: e.target.value})} /><textarea className="control w-full h-20" value={item.description || ''} onChange={e => onChange({...item, description: e.target.value})} /><label className="badge"><input type="checkbox" checked={item.is_active} onChange={e => onChange({...item, is_active: e.target.checked})} /> активно</label><Actions onSave={onSave} onDelete={onDelete} /></div>
 }
 
 function TariffEditor({ item, onChange, onSave, onDelete }: { item: Tariff; onChange: (x: Tariff) => void; onSave: () => void; onDelete: () => void }) {
