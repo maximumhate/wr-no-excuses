@@ -25,6 +25,12 @@ async def cmd_admin(message: Message):
     )
     await message.answer(text)
 
+@router.message(Command("chatid"))
+async def cmd_chatid(message: Message):
+    if not is_admin(message.from_user.id):
+        return
+    await message.answer(f"ID этого чата: <code>{message.chat.id}</code>")
+
 @router.message(Command("broadcast"))
 async def cmd_broadcast(message: Message):
     if not is_admin(message.from_user.id):

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
-import { Navigate } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { Users, FileText, Activity, Flame } from 'lucide-react'
 
@@ -16,18 +14,15 @@ interface DashboardData {
 }
 
 export default function AdminDashboard() {
-  const { user } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user?.is_admin) return
     api.get<DashboardData>('/admin/dashboard')
       .then(setData)
       .catch(err => setError(err.message || 'Ошибка загрузки'))
-  }, [user])
+  }, [])
 
-  if (!user?.is_admin) return <Navigate to="/" replace />
   if (error) return <div className="text-red-400 text-sm p-4 bg-red-500/10 border border-red-500/20 rounded-xl">{error}</div>
   if (!data) return <div className="text-gray-500 text-sm p-4">Загрузка...</div>
 

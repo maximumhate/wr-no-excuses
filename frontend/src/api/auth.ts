@@ -8,7 +8,6 @@ export interface User {
   last_name: string | null
   city: string | null
   level: string | null
-  is_admin: boolean
   is_active: boolean
   is_participant: boolean
   registered_at: string

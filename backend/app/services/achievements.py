@@ -27,7 +27,12 @@ ACHIEVEMENT_DEFS: list[dict] = [
 async def seed_achievements(db: AsyncSession):
     for adef in ACHIEVEMENT_DEFS:
         result = await db.execute(select(Achievement).where(Achievement.slug == adef["slug"]))
-        if not result.scalar_one_or_none():
+        achievement = result.scalar_one_or_none()
+        if achievement:
+            achievement.title = adef["title"]
+            achievement.description = adef["description"]
+            achievement.icon = adef["icon"]
+        else:
             db.add(Achievement(**adef))
     await db.commit()
 

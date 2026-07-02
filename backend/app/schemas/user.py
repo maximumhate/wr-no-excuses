@@ -21,8 +21,8 @@ class UserResponse(UserBase):
     id: uuid.UUID
     city: str | None = None
     level: str | None = None
-    is_admin: bool = False
     is_active: bool = True
+    is_participant: bool = False
     registered_at: datetime
     last_active_at: datetime
 

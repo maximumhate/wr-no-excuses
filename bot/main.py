@@ -31,6 +31,7 @@ async def on_startup():
         BotCommand(command="profile", description="Мой профиль"),
         BotCommand(command="mystats", description="Моя статистика"),
         BotCommand(command="weekly", description="Топ недели"),
+        BotCommand(command="chatid", description="ID текущего чата"),
     ], scope=BotCommandScopeDefault())
     asyncio.create_task(run_scheduler(bot))
 

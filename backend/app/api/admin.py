@@ -1,30 +1,25 @@
 import uuid
 from datetime import date, timedelta
-from fastapi import APIRouter, HTTPException, Depends, Query, Request
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 from app.database import get_db
+from app.models.admin_user import AdminUser
 from app.models.user import User
 from app.models.report import Report, ExerciseType, ReportStatus
 from app.models.streak import Streak
 from app.models.broadcast import Broadcast
 from app.schemas.user import UserResponse, UserUpdate
-from app.api.users import get_current_user
-from app.api.admin_auth import get_current_admin, ADMIN_SESSION_COOKIE
+from app.api.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-async def require_admin(request: Request, db: AsyncSession = Depends(get_db)):
-    if request.cookies.get(ADMIN_SESSION_COOKIE):
-        return await get_current_admin(request, db)
-    user = await get_current_user(request, db)
-    if not user.is_admin:
-        raise HTTPException(403, "Admin access required")
-    return user
+async def require_admin(admin: AdminUser = Depends(get_current_admin)) -> AdminUser:
+    return admin
 
 @router.get("/dashboard")
-async def admin_dashboard(admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_dashboard(admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     total_users = (await db.execute(select(func.count(User.id)))).scalar()
     active_today = (await db.execute(
         select(func.count(User.id)).where(User.last_active_at >= func.now() - text("interval '24 hours'"))
@@ -71,7 +66,7 @@ async def admin_dashboard(admin: User = Depends(require_admin), db: AsyncSession
 
 @router.get("/users")
 async def admin_list_users(
-    admin: User = Depends(require_admin),
+    admin: AdminUser = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
     search: str = "",
     skip: int = 0,
@@ -89,7 +84,7 @@ async def admin_list_users(
     return result.scalars().all()
 
 @router.get("/users/{user_id}")
-async def admin_get_user(user_id: uuid.UUID, admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_get_user(user_id: uuid.UUID, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(404, "User not found")
@@ -116,7 +111,7 @@ async def admin_get_user(user_id: uuid.UUID, admin: User = Depends(require_admin
     }
 
 @router.patch("/users/{user_id}", response_model=UserResponse)
-async def admin_update_user(user_id: uuid.UUID, data: UserUpdate, admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_update_user(user_id: uuid.UUID, data: UserUpdate, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(404, "User not found")
@@ -134,7 +129,7 @@ class ReportUpdate(BaseModel):
 
 @router.get("/reports")
 async def admin_list_reports(
-    admin: User = Depends(require_admin),
+    admin: AdminUser = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
     status: ReportStatus | None = None,
     exercise: ExerciseType | None = None,
@@ -154,7 +149,7 @@ async def admin_list_reports(
     return result.scalars().all()
 
 @router.patch("/reports/{report_id}")
-async def admin_update_report(report_id: uuid.UUID, data: ReportUpdate, admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_update_report(report_id: uuid.UUID, data: ReportUpdate, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     report = await db.get(Report, report_id)
     if not report:
         raise HTTPException(404, "Report not found")
@@ -168,10 +163,10 @@ class BroadcastRequest(BaseModel):
     text: str
 
 @router.post("/broadcast")
-async def admin_broadcast(data: BroadcastRequest, admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_broadcast(data: BroadcastRequest, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count(User.id)).where(User.is_active == True))
     total = result.scalar() or 0
-    broadcast = Broadcast(text=data.text, created_by=admin.id, total_users=total)
+    broadcast = Broadcast(text=data.text, created_by=None, total_users=total)
     db.add(broadcast)
     await db.commit()
     await db.refresh(broadcast)
@@ -183,7 +178,7 @@ async def admin_broadcast(data: BroadcastRequest, admin: User = Depends(require_
     }
 
 @router.get("/broadcast/pending")
-async def admin_pending_broadcasts(admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_pending_broadcasts(admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Broadcast).where(Broadcast.sent_at.is_(None)).order_by(Broadcast.created_at)
     )
@@ -199,7 +194,7 @@ async def admin_pending_broadcasts(admin: User = Depends(require_admin), db: Asy
     ]
 
 @router.patch("/broadcast/{broadcast_id}/complete")
-async def admin_complete_broadcast(broadcast_id: uuid.UUID, admin: User = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_complete_broadcast(broadcast_id: uuid.UUID, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     broadcast = await db.get(Broadcast, broadcast_id)
     if not broadcast:
         raise HTTPException(404, "Broadcast not found")

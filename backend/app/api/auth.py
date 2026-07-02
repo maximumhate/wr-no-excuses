@@ -76,7 +76,22 @@ async def auth_telegram(body: AuthRequest, response: Response, db: AsyncSession 
         samesite="lax",
         max_age=86400 * 30,
     )
-    return {"ok": True, "user": {"id": str(user.id), "telegram_id": user.telegram_id, "username": user.username}}
+    return {
+        "ok": True,
+        "user": {
+            "id": str(user.id),
+            "telegram_id": user.telegram_id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "city": user.city,
+            "level": user.level,
+            "is_active": user.is_active,
+            "is_participant": user.is_participant,
+            "registered_at": user.registered_at.isoformat(),
+            "last_active_at": user.last_active_at.isoformat(),
+        },
+    }
 
 @router.post("/logout")
 async def logout(response: Response):

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
 import type { User } from '../../api/auth'
 import { Search, Dumbbell, Target, Eye, TrendingUp, Zap, Flame, Trophy } from 'lucide-react'
 
@@ -13,14 +11,11 @@ interface UserDetail {
 }
 
 export default function AdminUsers() {
-  const { user } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<UserDetail | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [editData, setEditData] = useState({ city: '', level: '' })
-
-  if (!user?.is_admin) return <Navigate to="/" replace />
 
   useEffect(() => {
     const params = search ? `?search=${encodeURIComponent(search)}` : ''

@@ -30,8 +30,9 @@ services:
       GROUP_ID: ${GROUP_ID}
       DOMAIN: ${DOMAIN}
       APP_URL: ${APP_URL}
-      YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID}
-      YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY}
+      PLATEGA_MERCHANT_ID: ${PLATEGA_MERCHANT_ID}
+      PLATEGA_API_KEY: ${PLATEGA_API_KEY}
+      PLATEGA_BASE_URL: ${PLATEGA_BASE_URL:-https://app.platega.io}
       ADMIN_IDS: ${ADMIN_IDS}
       SECRET_KEY: ${SECRET_KEY}
     restart: unless-stopped

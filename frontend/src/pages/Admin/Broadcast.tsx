@@ -1,16 +1,11 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
 import { Send } from 'lucide-react'
 
 export default function AdminBroadcast() {
-  const { user } = useAuth()
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<string | null>(null)
-
-  if (!user?.is_admin) return <Navigate to="/" replace />
 
   const handleSend = async () => {
     if (!text.trim()) return

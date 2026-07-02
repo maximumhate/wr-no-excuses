@@ -18,10 +18,16 @@ class BotSettings(BaseSettings):
 
     @property
     def group_id_int(self) -> int | None:
+        value = self.group_id.strip()
+        if not value:
+            return None
         try:
-            return int(self.group_id) if self.group_id else None
+            group_id = int(value)
         except ValueError:
             return None
+        if group_id > 0:
+            return int(f"-100{group_id}")
+        return group_id
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

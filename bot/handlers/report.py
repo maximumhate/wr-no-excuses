@@ -23,6 +23,7 @@ async def handle_report(message: Message):
 
     group_id = settings.group_id_int
     if group_id and message.chat.id != group_id:
+        logger.info(f"Ignoring message from chat {message.chat.id}; expected {group_id}")
         return
 
     if not message.text:

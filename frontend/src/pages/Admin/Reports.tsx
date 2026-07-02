@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
 import { api } from '../../api/client'
-import { useAuth } from '../../hooks/useAuth'
 import { Check, X } from 'lucide-react'
 
 interface Report {
@@ -37,13 +35,10 @@ const statusColors: Record<string, string> = {
 }
 
 export default function AdminReports() {
-  const { user } = useAuth()
   const [reports, setReports] = useState<Report[]>([])
   const [filter, setFilter] = useState({ status: '', exercise: '' })
   const [editing, setEditing] = useState<string | null>(null)
   const [editValue, setEditValue] = useState(0)
-
-  if (!user?.is_admin) return <Navigate to="/" replace />
 
   useEffect(() => {
     const params = new URLSearchParams()
