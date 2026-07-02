@@ -15,15 +15,15 @@ from app.models.admin_user import AdminUser
 from app.models.broadcast import Broadcast, BroadcastDelivery
 from app.models.challenge import ChallengeRegistration, ChallengeRegistrationExercise
 from app.models.cms import BotText, SubscriptionTariff
-from app.models.difficulty import UserExerciseDifficulty
+from app.models.difficulty import ExerciseDifficultyRule, UserExerciseDifficulty
 from app.models.report import ExerciseType, Report, ReportStatus
 from app.models.streak import Streak
 from app.models.subscription import Subscription
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse
 from app.services.achievements import check_achievements
 from app.services.challenges import ensure_current_challenge, serialize_challenge
-from app.services.exercises import get_exercise_label
+from app.services.exercises import EXERCISE_TYPES, get_exercise_label
 from app.services.streak import update_streak
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -270,13 +270,91 @@ async def admin_get_user(user_id: uuid.UUID, admin: AdminUser = Depends(require_
     }
 
 
+class AdminUserUpdate(BaseModel):
+    city: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    difficulty_levels: dict[str, str] | None = None
+
+
 @router.patch("/users/{user_id}", response_model=UserResponse)
-async def admin_update_user(user_id: uuid.UUID, data: UserUpdate, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_update_user(user_id: uuid.UUID, data: AdminUserUpdate, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(404, "User not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    body = data.model_dump(exclude_unset=True)
+    difficulty_levels = body.pop("difficulty_levels", None)
+    for field, value in body.items():
         setattr(user, field, value)
+
+    if difficulty_levels is not None:
+        cleaned = {
+            exercise_type: difficulty
+            for exercise_type, difficulty in difficulty_levels.items()
+            if difficulty
+        }
+        unknown = sorted(set(cleaned) - EXERCISE_TYPES)
+        if unknown:
+            raise HTTPException(400, "Unknown exercise: " + ", ".join(unknown))
+
+        if cleaned:
+            exercise_types = list(cleaned.keys())
+            difficulties = list(cleaned.values())
+            rules_result = await db.execute(
+                select(ExerciseDifficultyRule).where(
+                    ExerciseDifficultyRule.exercise_type.in_(exercise_types),
+                    ExerciseDifficultyRule.difficulty.in_(difficulties),
+                    ExerciseDifficultyRule.is_active == True,
+                )
+            )
+            valid_rules = {(rule.exercise_type, rule.difficulty) for rule in rules_result.scalars().all()}
+            missing = [
+                f"{exercise_type}:{difficulty}"
+                for exercise_type, difficulty in cleaned.items()
+                if (exercise_type, difficulty) not in valid_rules
+            ]
+            if missing:
+                raise HTTPException(400, "Некорректный уровень сложности: " + ", ".join(missing))
+
+            now = datetime.now(MSK)
+            existing_result = await db.execute(
+                select(UserExerciseDifficulty).where(
+                    UserExerciseDifficulty.user_id == user.id,
+                    UserExerciseDifficulty.exercise_type.in_(exercise_types),
+                )
+            )
+            existing = {item.exercise_type: item for item in existing_result.scalars().all()}
+            for exercise_type, difficulty in cleaned.items():
+                current = existing.get(exercise_type)
+                if current:
+                    if current.difficulty != difficulty:
+                        current.difficulty = difficulty
+                        current.last_changed_at = now
+                        current.locked_until = now + timedelta(days=90)
+                else:
+                    db.add(UserExerciseDifficulty(
+                        user_id=user.id,
+                        exercise_type=exercise_type,
+                        difficulty=difficulty,
+                        last_changed_at=now,
+                        locked_until=now + timedelta(days=90),
+                    ))
+
+            challenge = await ensure_current_challenge(db)
+            registration = (await db.execute(select(ChallengeRegistration).where(
+                ChallengeRegistration.user_id == user.id,
+                ChallengeRegistration.challenge_id == challenge.id,
+            ))).scalar_one_or_none()
+            if registration:
+                reg_items = await db.execute(
+                    select(ChallengeRegistrationExercise).where(
+                        ChallengeRegistrationExercise.registration_id == registration.id,
+                        ChallengeRegistrationExercise.exercise_type.in_(exercise_types),
+                    )
+                )
+                for item in reg_items.scalars().all():
+                    item.difficulty = cleaned[item.exercise_type]
+
     await db.commit()
     await db.refresh(user)
     return user

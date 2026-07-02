@@ -9,7 +9,6 @@ interface AdminUser {
   first_name: string | null
   last_name: string | null
   city: string | null
-  level: string | null
   is_active: boolean
   is_participant: boolean
   registered_at: string
@@ -33,12 +32,21 @@ const EXERCISES = [
   { key: 'abs', label: 'Пресс', icon: Zap, color: 'text-[var(--accent-3)]' },
 ]
 
+const DIFFICULTIES = [
+  { key: 'novice', label: 'Новичок' },
+  { key: 'amateur', label: 'Любитель' },
+  { key: 'pro', label: 'Профи' },
+]
+
+const EXERCISE_LABELS = Object.fromEntries(EXERCISES.map(ex => [ex.key, ex.label]))
+const DIFFICULTY_LABELS = Object.fromEntries(DIFFICULTIES.map(item => [item.key, item.label]))
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<UserDetail | null>(null)
   const [editMode, setEditMode] = useState(false)
-  const [editData, setEditData] = useState({ city: '', level: '' })
+  const [editData, setEditData] = useState<{ city: string; difficulty_levels: Record<string, string> }>({ city: '', difficulty_levels: {} })
 
   useEffect(() => {
     const params = search ? `?search=${encodeURIComponent(search)}` : ''
@@ -48,15 +56,17 @@ export default function AdminUsers() {
   const loadUser = async (u: AdminUser) => {
     const detail = await api.get<UserDetail>(`/admin/users/${u.id}`)
     setSelected(detail)
-    setEditData({ city: detail.user.city || '', level: detail.user.level || '' })
+    setUsers(prev => prev.map(item => item.id === detail.user.id ? detail.user : item))
+    setEditData({ city: detail.user.city || '', difficulty_levels: detail.user.difficulty_levels || {} })
     setEditMode(false)
   }
 
   const saveUser = async () => {
     if (!selected) return
-    await api.patch(`/admin/users/${selected.user.id}`, editData)
+    const difficulty_levels = Object.fromEntries(Object.entries(editData.difficulty_levels).filter(([, value]) => value))
+    await api.patch(`/admin/users/${selected.user.id}`, { city: editData.city, difficulty_levels })
     setEditMode(false)
-    loadUser(selected.user)
+    await loadUser(selected.user)
   }
 
   return (
@@ -105,7 +115,20 @@ export default function AdminUsers() {
             {editMode ? (
               <div className="space-y-3">
                 <label className="block text-xs text-muted-foreground">Город<input className="control w-full mt-1" value={editData.city} onChange={e => setEditData(p => ({...p, city: e.target.value}))} /></label>
-                <label className="block text-xs text-muted-foreground">Legacy level<input className="control w-full mt-1" value={editData.level} onChange={e => setEditData(p => ({...p, level: e.target.value}))} /></label>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-2">Уровни по упражнениям</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {EXERCISES.map(ex => (
+                      <label key={ex.key} className="block text-xs text-muted-foreground">
+                        {ex.label}
+                        <select className="control w-full mt-1" value={editData.difficulty_levels[ex.key] || ''} onChange={e => setEditData(p => ({...p, difficulty_levels: {...p.difficulty_levels, [ex.key]: e.target.value}}))}>
+                          <option value="" disabled>Не задан</option>
+                          {DIFFICULTIES.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex gap-2"><button onClick={saveUser} className="btn-primary">Сохранить</button><button onClick={() => setEditMode(false)} className="btn-ghost">Отмена</button></div>
               </div>
             ) : (
@@ -115,15 +138,15 @@ export default function AdminUsers() {
               </div>
             )}
 
-            <div>
+            {!editMode && <div>
               <h3 className="font-bold text-foreground mb-2">Уровни сложности</h3>
               <div className="flex flex-wrap gap-2"><DifficultyBadges levels={selected.user.difficulty_levels} /></div>
-            </div>
+            </div>}
 
             {selected.current_registration && (
               <div>
                 <h3 className="font-bold text-foreground mb-2">Текущий челлендж</h3>
-                <div className="flex flex-wrap gap-2">{selected.current_registration.exercises.map(e => <span key={e.exercise_type} className="badge">{e.label}: {e.difficulty}</span>)}</div>
+                <div className="flex flex-wrap gap-2">{selected.current_registration.exercises.map(e => <span key={e.exercise_type} className="badge">{e.label}: {formatDifficulty(e.difficulty)}</span>)}</div>
               </div>
             )}
 
@@ -147,7 +170,15 @@ export default function AdminUsers() {
 function DifficultyBadges({ levels }: { levels: Record<string, string> }) {
   const entries = Object.entries(levels || {})
   if (!entries.length) return <span className="text-muted-foreground text-xs">—</span>
-  return <div className="flex flex-wrap gap-1">{entries.map(([exercise, level]) => <span key={exercise} className="badge">{exercise}: {level}</span>)}</div>
+  return <div className="flex flex-wrap gap-1">{entries.map(([exercise, level]) => <span key={exercise} className="badge">{formatExercise(exercise)}: {formatDifficulty(level)}</span>)}</div>
+}
+
+function formatExercise(exercise: string) {
+  return EXERCISE_LABELS[exercise] || exercise
+}
+
+function formatDifficulty(level: string) {
+  return DIFFICULTY_LABELS[level] || level
 }
 
 function Info({ label, value }: { label: string; value: string }) {
