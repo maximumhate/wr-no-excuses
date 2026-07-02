@@ -10,6 +10,8 @@ from app.schemas.report import ReportCreate, ReportResponse, ReportStats
 from app.api.users import get_current_user
 from app.services.streak import update_streak
 from app.services.achievements import check_achievements
+from app.api.challenges import validate_report_registration
+from app.services.challenges import today_msk
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -18,11 +20,15 @@ async def create_report(data: ReportCreate, user: User = Depends(get_current_use
     if not user.is_participant:
         raise HTTPException(403, "Зарегистрируйтесь в боте через /start для участия в челлендже")
 
+    challenge, registration = await validate_report_registration(user, data.exercise_type, data.value, db)
+
     report = Report(
         user_id=user.id,
+        challenge_id=challenge.id,
+        registration_id=registration.id,
         exercise_type=data.exercise_type,
         value=data.value,
-        report_date=data.report_date or date.today(),
+        report_date=data.report_date or today_msk(),
         telegram_chat_id=data.telegram_chat_id,
         telegram_message_id=data.telegram_message_id,
         thread_message_id=data.thread_message_id,
@@ -54,9 +60,14 @@ async def get_stats(
     user: User = Depends(get_current_user),
     week_start: str | None = Query(None),
     week_end: str | None = Query(None),
+    current_challenge: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
     base_filter = and_(Report.user_id == user.id, Report.status == ReportStatus.approved)
+    if current_challenge:
+        from app.services.challenges import ensure_current_challenge
+        challenge = await ensure_current_challenge(db)
+        base_filter = and_(base_filter, Report.challenge_id == challenge.id)
     if week_start:
         try:
             ws = datetime.strptime(week_start, "%Y-%m-%d").date()

@@ -20,16 +20,10 @@ async def cmd_admin(message: Message):
     text = (
         "🔧 <b>Админ-панель</b>\n\n"
         "Доступные команды:\n"
-        "• /broadcast <текст> — рассылка всем пользователям\n"
+        "• /broadcast <текст> — текстовая рассылка всем пользователям\n"
         "• /stats — общая статистика"
     )
     await message.answer(text)
-
-@router.message(Command("chatid"))
-async def cmd_chatid(message: Message):
-    if not is_admin(message.from_user.id):
-        return
-    await message.answer(f"ID этого чата: <code>{message.chat.id}</code>")
 
 @router.message(Command("broadcast"))
 async def cmd_broadcast(message: Message):
@@ -41,7 +35,7 @@ async def cmd_broadcast(message: Message):
         return
     api = ApiClient()
     try:
-        resp = await api.client.post("/api/admin/broadcast", json={"text": text})
+        resp = await api.client.post("/api/admin/broadcast", json={"text": text}, headers=api.bot_headers)
         if resp.status_code == 200:
             data = resp.json()
             await message.answer(f"✅ {data['message']}")
@@ -59,7 +53,7 @@ async def cmd_stats(message: Message):
         return
     api = ApiClient()
     try:
-        resp = await api.client.get("/api/admin/dashboard")
+        resp = await api.client.get("/api/admin/dashboard", headers=api.bot_headers)
         if resp.status_code == 200:
             data = resp.json()
             text = (

@@ -196,7 +196,7 @@ async def handle_report(message: Message):
                 thread_message_id=thread_message_id,
             )
             if not resp:
-                await message.reply("❌ Не смог сохранить отчёт. Попробуйте ещё раз позже.")
+                await message.reply(f"❌ Не смог сохранить отчёт. {api.last_error or 'Попробуйте ещё раз позже.'}")
                 return
             responses.append(resp)
     finally:
@@ -225,5 +225,5 @@ async def handle_report(message: Message):
     await message.reply(
         f"✅ <b>Отчёт принят!</b>\n\n{confirmation}"
         f"{ach_text}\n\n"
-        f"📊 <a href='{settings.app_url}'>Моя статистика</a>"
+        "📊 Моя статистика: /mystats"
     )

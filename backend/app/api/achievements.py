@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/achievements", tags=["achievements"])
 
 @router.get("")
 async def list_achievements(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Achievement).order_by(Achievement.slug))
+    result = await db.execute(select(Achievement).where(Achievement.is_active == True).order_by(Achievement.sort_order, Achievement.slug))
     return [
         {
             "slug": a.slug,
@@ -28,7 +28,7 @@ async def my_achievements(user: User = Depends(get_current_user), db: AsyncSessi
     )
     ua_list = result.scalars().all()
     slugs = {ua.achievement_id for ua in ua_list}
-    all_ach = await db.execute(select(Achievement))
+    all_ach = await db.execute(select(Achievement).where(Achievement.is_active == True).order_by(Achievement.sort_order, Achievement.slug))
     return [
         {
             "slug": a.slug,

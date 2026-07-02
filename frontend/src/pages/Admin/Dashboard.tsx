@@ -1,115 +1,99 @@
 import { useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { api } from '../../api/client'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
-import { Users, FileText, Activity, Flame } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { Activity, Flame, FileText, Send, Users } from 'lucide-react'
 
 interface DashboardData {
   total_users: number
   active_today: number
   total_reports: number
   today_reports: number
+  challenge_registrations: number
+  current_challenge: { number: number; starts_on: string; ends_on: string }
   reports_per_day: { date: string; count: number }[]
   registrations: { date: string; count: number }[]
+  exercise_distribution: { exercise_type: string; label: string; total: number; reports: number }[]
+  difficulty_distribution: { exercise_type: string; label: string; difficulty: string; count: number }[]
+  subscriptions: { plan: string; count: number }[]
+  broadcasts: { id: string; status: string; total_users: number; sent_count: number; failed_count: number; created_at: string }[]
   streak_leaders: { name: string; username: string; streak: number }[]
 }
+
+const COLORS = ['#d7ff35', '#45d3ff', '#ff6b2b', '#35d07f', '#ff4f9a']
 
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    api.get<DashboardData>('/admin/dashboard')
-      .then(setData)
-      .catch(err => setError(err.message || 'Ошибка загрузки'))
+    api.get<DashboardData>('/admin/dashboard').then(setData).catch(err => setError(err.message || 'Ошибка загрузки'))
   }, [])
 
-  if (error) return <div className="text-red-400 text-sm p-4 bg-red-500/10 border border-red-500/20 rounded-xl">{error}</div>
-  if (!data) return <div className="text-gray-500 text-sm p-4">Загрузка...</div>
+  if (error) return <div className="neo-card p-4 text-danger">{error}</div>
+  if (!data) return <div className="neo-card p-4 text-muted-foreground">Загрузка...</div>
 
   const cards = [
-    { label: 'Всего пользователей', value: data.total_users, icon: Users, color: 'text-blue-400' },
-    { label: 'Активных сегодня', value: data.active_today, icon: Activity, color: 'text-green-400' },
-    { label: 'Всего отчётов', value: data.total_reports, icon: FileText, color: 'text-purple-400' },
-    { label: 'Отчётов сегодня', value: data.today_reports, icon: Flame, color: 'text-orange-400' },
+    { label: 'Всего пользователей', value: data.total_users, icon: Users, color: 'text-accent' },
+    { label: 'Регистраций в челлендж', value: data.challenge_registrations, icon: Activity, color: 'text-success' },
+    { label: 'Всего отчётов', value: data.total_reports, icon: FileText, color: 'text-warning' },
+    { label: 'Отчётов сегодня', value: data.today_reports, icon: Flame, color: 'text-danger' },
   ]
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl md:text-2xl font-bold text-white">Панель управления</h1>
+      <div className="neo-card panel-line p-5">
+        <h1 className="font-display text-3xl text-foreground">Панель управления</h1>
+        <p className="text-sm text-muted-foreground mt-1">Челлендж №{data.current_challenge.number}: {data.current_challenge.starts_on} — {data.current_challenge.ends_on}</p>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {cards.map(c => (
-          <div key={c.label} className="glass rounded-xl p-4 card-hover">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-gray-400 text-xs">{c.label}</span>
-              <c.icon className={`w-4 h-4 ${c.color}`} />
-            </div>
-            <div className={`text-2xl font-bold ${c.color}`}>{c.value.toLocaleString()}</div>
-          </div>
-        ))}
+        {cards.map(card => {
+          const Icon = card.icon
+          return <div key={card.label} className="neo-card p-4"><div className="flex items-center justify-between mb-3"><span className="text-xs text-muted-foreground">{card.label}</span><Icon className={`w-4 h-4 ${card.color}`} /></div><div className={`text-3xl font-extrabold ${card.color}`}>{card.value.toLocaleString()}</div></div>
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="glass rounded-xl p-4 md:p-6 card-hover">
-          <h2 className="text-sm font-semibold text-white mb-4">Отчёты по дням</h2>
-          {data.reports_per_day.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={data.reports_per_day}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="date" stroke="#4B5563" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#4B5563" />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }} />
-                <Bar dataKey="count" fill="#3B82F6" radius={[3,3,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : <p className="text-gray-500 text-sm">Нет данных</p>}
-        </div>
-        <div className="glass rounded-xl p-4 md:p-6 card-hover">
-          <h2 className="text-sm font-semibold text-white mb-4">Регистрации</h2>
-          {data.registrations.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={data.registrations}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="date" stroke="#4B5563" tick={{ fontSize: 11 }} />
-                <YAxis stroke="#4B5563" />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }} />
-                <Line type="monotone" dataKey="count" stroke="#22C55E" strokeWidth={2} dot={{ fill: '#22C55E', r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : <p className="text-gray-500 text-sm">Нет данных</p>}
-        </div>
+        <ChartCard title="Отчёты по дням">
+          <ResponsiveContainer width="100%" height={240}><BarChart data={data.reports_per_day}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="date" stroke="var(--text-muted)" tick={{ fontSize: 11 }} /><YAxis stroke="var(--text-muted)" /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="count" fill="var(--accent)" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer>
+        </ChartCard>
+        <ChartCard title="Регистрации">
+          <ResponsiveContainer width="100%" height={240}><LineChart data={data.registrations}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="date" stroke="var(--text-muted)" tick={{ fontSize: 11 }} /><YAxis stroke="var(--text-muted)" /><Tooltip contentStyle={tooltipStyle} /><Line type="monotone" dataKey="count" stroke="var(--accent-3)" strokeWidth={3} dot={{ r: 3 }} /></LineChart></ResponsiveContainer>
+        </ChartCard>
       </div>
 
-      <div className="glass rounded-xl p-4 md:p-6 card-hover">
-        <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-          <Flame className="w-4 h-4 text-orange-400" />
-          Лидеры по стрику
-        </h2>
-        <div className="overflow-x-auto hide-scrollbar">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 border-b border-gray-800/50 text-xs">
-                <th className="text-left p-2 font-medium">#</th>
-                <th className="text-left p-2 font-medium">Имя</th>
-                <th className="text-left p-2 font-medium">Username</th>
-                <th className="text-right p-2 font-medium">Стрик</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.streak_leaders.map((u, i) => (
-                <tr key={i} className="border-b border-gray-800/30 text-gray-300 hover:bg-gray-800/20 transition-colors">
-                  <td className="p-2 text-gray-500">{i + 1}</td>
-                  <td className="p-2 font-medium text-white">{u.name}</td>
-                  <td className="p-2 text-gray-400">@{u.username}</td>
-                  <td className="p-2 text-right font-bold text-green-400">{u.streak} дн</td>
-                </tr>
-              ))}
-              {data.streak_leaders.length === 0 && (
-                <tr><td colSpan={4} className="p-4 text-gray-500 text-center text-sm">Пока нет данных</td></tr>
-              )}
-            </tbody>
-          </table>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <ChartCard title="Упражнения">
+          <ResponsiveContainer width="100%" height={240}><PieChart><Pie data={data.exercise_distribution} dataKey="reports" nameKey="label" innerRadius={52} outerRadius={86}>{data.exercise_distribution.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip contentStyle={tooltipStyle} /></PieChart></ResponsiveContainer>
+        </ChartCard>
+        <ChartCard title="Подписки">
+          <ResponsiveContainer width="100%" height={240}><BarChart data={data.subscriptions}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="plan" stroke="var(--text-muted)" /><YAxis stroke="var(--text-muted)" /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="count" fill="var(--accent-2)" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer>
+        </ChartCard>
+        <ChartCard title="Сложности">
+          <div className="space-y-2 max-h-[240px] overflow-auto pr-1">
+            {data.difficulty_distribution.map(item => <div key={`${item.exercise_type}-${item.difficulty}`} className="flex items-center justify-between badge w-full"><span>{item.label} · {item.difficulty}</span><b>{item.count}</b></div>)}
+            {data.difficulty_distribution.length === 0 && <p className="text-sm text-muted-foreground">Нет регистраций</p>}
+          </div>
+        </ChartCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="neo-card p-4 md:p-6">
+          <h2 className="font-bold text-foreground mb-4 flex items-center gap-2"><Send className="w-4 h-4 text-accent" /> Последние рассылки</h2>
+          <table className="data-table"><thead><tr><th>Дата</th><th>Статус</th><th className="text-right">Доставлено</th><th className="text-right">Ошибки</th></tr></thead><tbody>{data.broadcasts.map(b => <tr key={b.id}><td className="text-muted-foreground">{b.created_at?.slice(0,10)}</td><td>{b.status}</td><td className="text-right text-success font-bold">{b.sent_count}/{b.total_users}</td><td className="text-right text-danger font-bold">{b.failed_count}</td></tr>)}</tbody></table>
+        </div>
+        <div className="neo-card p-4 md:p-6">
+          <h2 className="font-bold text-foreground mb-4 flex items-center gap-2"><Flame className="w-4 h-4 text-warning" /> Лидеры по стрику</h2>
+          <table className="data-table"><thead><tr><th>#</th><th>Имя</th><th>Username</th><th className="text-right">Стрик</th></tr></thead><tbody>{data.streak_leaders.map((u, i) => <tr key={i}><td>{i+1}</td><td className="font-bold">{u.name}</td><td className="text-muted-foreground">@{u.username || '—'}</td><td className="text-right text-success font-bold">{u.streak}</td></tr>)}</tbody></table>
         </div>
       </div>
     </div>
   )
+}
+
+const tooltipStyle = { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 14, color: 'var(--text-primary)' }
+
+function ChartCard({ title, children }: { title: string; children: ReactNode }) {
+  return <div className="neo-card p-4 md:p-6"><h2 className="font-bold text-foreground mb-4">{title}</h2>{children}</div>
 }

@@ -3,19 +3,20 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, BotCommandScopeDefault
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
 from bot.config import settings
 from bot.handlers import start, report, subscription, admin, stats
-from bot.services.scheduler import run_broadcast_scheduler, run_scheduler
+from bot.services.scheduler import run_broadcast_scheduler, run_challenge_scheduler, run_scheduler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-dp = Dispatcher()
+dp = Dispatcher(storage=MemoryStorage())
 
 dp.include_router(start.router)
 dp.include_router(subscription.router)
@@ -31,9 +32,9 @@ async def on_startup():
         BotCommand(command="profile", description="Мой профиль"),
         BotCommand(command="mystats", description="Моя статистика"),
         BotCommand(command="weekly", description="Топ недели"),
-        BotCommand(command="chatid", description="ID текущего чата"),
     ], scope=BotCommandScopeDefault())
     asyncio.create_task(run_scheduler(bot))
+    asyncio.create_task(run_challenge_scheduler(bot))
     asyncio.create_task(run_broadcast_scheduler(bot))
 
 async def on_shutdown():

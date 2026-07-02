@@ -64,16 +64,16 @@ export default function AdminReports() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl md:text-2xl font-bold text-white">Отчёты</h1>
+      <div className="neo-card panel-line p-5"><h1 className="font-display text-3xl text-foreground">Отчёты</h1></div>
 
       <div className="flex flex-wrap gap-2">
-        <select className="bg-gray-900 border border-gray-700/50 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-blue-500/50" value={filter.status} onChange={e => setFilter(f => ({...f, status: e.target.value}))}>
+        <select className="control" value={filter.status} onChange={e => setFilter(f => ({...f, status: e.target.value}))}>
           <option value="">Все статусы</option>
           <option value="pending">На проверке</option>
           <option value="approved">Принято</option>
           <option value="rejected">Отклонено</option>
         </select>
-        <select className="bg-gray-900 border border-gray-700/50 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-blue-500/50" value={filter.exercise} onChange={e => setFilter(f => ({...f, exercise: e.target.value}))}>
+        <select className="control" value={filter.exercise} onChange={e => setFilter(f => ({...f, exercise: e.target.value}))}>
           <option value="">Все упражнения</option>
           <option value="pushups">Отжимания</option>
           <option value="squats">Приседания</option>
@@ -83,11 +83,11 @@ export default function AdminReports() {
         </select>
       </div>
 
-      <div className="glass rounded-xl overflow-hidden">
+      <div className="neo-card overflow-hidden">
         <div className="overflow-x-auto hide-scrollbar">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-500 border-b border-gray-800/50 text-xs">
+              <tr className="text-muted-foreground border-b border-default text-xs">
                 <th className="text-left p-3 font-medium">Дата</th>
                 <th className="text-left p-3 font-medium">Упражнение</th>
                 <th className="text-left p-3 font-medium">Значение</th>
@@ -98,16 +98,16 @@ export default function AdminReports() {
             </thead>
             <tbody>
               {reports.map(r => (
-                <tr key={r.id} className="border-b border-gray-800/30 text-gray-300 hover:bg-gray-800/20 transition-colors">
-                  <td className="p-3 text-gray-400 text-xs">{r.report_date}</td>
+                <tr key={r.id} className="border-b border-default text-secondary hover:bg-accent/10 transition-colors">
+                  <td className="p-3 text-muted-foreground text-xs">{r.report_date}</td>
                   <td className="p-3">
                     {EMOJI_MAP[r.exercise_type] || '✅'} {LABEL_MAP[r.exercise_type] || r.exercise_type}
                   </td>
                   <td className="p-3">
                     {editing === r.id ? (
-                      <input className="w-20 bg-gray-800 border border-gray-700/50 rounded px-2 py-1 text-white text-sm outline-none focus:border-blue-500/50" type="number" value={editValue} onChange={e => setEditValue(+e.target.value)} />
+                      <input className="control w-20 px-2 py-1" type="number" value={editValue} onChange={e => setEditValue(+e.target.value)} />
                     ) : (
-                      <span className="font-medium text-white">{r.value}{r.exercise_type === 'plank' ? ' сек' : ''}</span>
+                      <span className="font-medium text-foreground">{r.value}{r.exercise_type === 'plank' ? ' сек' : ''}</span>
                     )}
                   </td>
                   <td className="p-3">
@@ -121,7 +121,7 @@ export default function AdminReports() {
                         Открыть <ExternalLink className="w-3 h-3" />
                       </a>
                     ) : (
-                      <span className="text-gray-600 text-xs">нет ссылки</span>
+                      <span className="text-muted-foreground text-xs">нет ссылки</span>
                     )}
                   </td>
                   <td className={`p-3 font-medium text-xs ${statusColors[r.status] || ''}`}>
@@ -132,7 +132,7 @@ export default function AdminReports() {
                       {editing === r.id ? (
                         <>
                           <button onClick={() => updateReport(r.id, { value: editValue })} className="text-green-400 hover:text-green-300 text-xs">💾</button>
-                          <button onClick={() => setEditing(null)} className="text-gray-500 hover:text-gray-400 text-xs">✕</button>
+                           <button onClick={() => setEditing(null)} className="text-muted-foreground text-xs">✕</button>
                         </>
                       ) : (
                         <button onClick={() => { setEditing(r.id); setEditValue(r.value) }} className="text-blue-400 hover:text-blue-300 text-xs">✏️</button>
@@ -147,7 +147,7 @@ export default function AdminReports() {
                   </td>
                 </tr>
               ))}
-              {reports.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-500 text-sm">Нет отчётов</td></tr>}
+              {reports.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground text-sm">Нет отчётов</td></tr>}
             </tbody>
           </table>
         </div>

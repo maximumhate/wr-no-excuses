@@ -24,3 +24,5 @@ class User(Base):
     streaks = relationship("Streak", back_populates="user", lazy="selectin")
     subscription = relationship("Subscription", back_populates="user", uselist=False, lazy="selectin")
     achievements = relationship("UserAchievement", back_populates="user", lazy="selectin")
+    challenge_registrations = relationship("ChallengeRegistration", back_populates="user", lazy="selectin")
+    exercise_difficulties = relationship("UserExerciseDifficulty", back_populates="user", lazy="selectin")

@@ -38,11 +38,11 @@ export default function TelegramLoginButton() {
         type="button"
         onClick={openLogin}
         disabled={!ready}
-        className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
       >
         {ready ? 'Войти через Telegram' : 'Загрузка Telegram...'}
       </button>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   )
 }

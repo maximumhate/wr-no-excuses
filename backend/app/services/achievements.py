@@ -25,15 +25,11 @@ ACHIEVEMENT_DEFS: list[dict] = [
 ]
 
 async def seed_achievements(db: AsyncSession):
-    for adef in ACHIEVEMENT_DEFS:
+    for index, adef in enumerate(ACHIEVEMENT_DEFS):
         result = await db.execute(select(Achievement).where(Achievement.slug == adef["slug"]))
         achievement = result.scalar_one_or_none()
-        if achievement:
-            achievement.title = adef["title"]
-            achievement.description = adef["description"]
-            achievement.icon = adef["icon"]
-        else:
-            db.add(Achievement(**adef))
+        if not achievement:
+            db.add(Achievement(**adef, sort_order=index, is_active=True))
     await db.commit()
 
 async def get_achievement_by_slug(slug: str, db: AsyncSession) -> Achievement | None:

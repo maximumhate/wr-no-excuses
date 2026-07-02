@@ -22,6 +22,8 @@ class Report(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    challenge_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("challenges.id"), nullable=True, index=True)
+    registration_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("challenge_registrations.id"), nullable=True, index=True)
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
     telegram_message_id: Mapped[int | None] = mapped_column(BigInteger)
     thread_message_id: Mapped[int | None] = mapped_column(BigInteger)
@@ -33,3 +35,5 @@ class Report(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="reports")
+    challenge = relationship("Challenge")
+    registration = relationship("ChallengeRegistration")

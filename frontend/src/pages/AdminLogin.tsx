@@ -45,8 +45,8 @@ export default function AdminLogin() {
       </div>
       <div className="w-full max-w-sm animate-scale-in">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl animated-gradient flex items-center justify-center shadow-lg shadow-red-500/20">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl animated-gradient flex items-center justify-center shadow-lg">
+            <Shield className="w-8 h-8 text-[#090b0f]" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Админ-панель</h1>
           <p className="text-muted-foreground mt-1 text-sm">Вход для администраторов</p>
@@ -81,7 +81,7 @@ export default function AdminLogin() {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl animated-gradient text-white font-medium transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            className="btn-primary w-full"
           >
             Войти
           </button>

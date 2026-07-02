@@ -3,9 +3,11 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
+from app.models.challenge import ChallengeRegistration
 from app.models.user import User
 from app.models.report import Report, ExerciseType, ReportStatus
 from app.models.streak import Streak
+from app.services.challenges import ensure_current_challenge, serialize_challenge
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
@@ -21,11 +23,18 @@ async def leaderboard(
     period_days: int = Query(default=0, le=365),
     week_start: str | None = None,
     week_end: str | None = None,
+    current_challenge: bool = False,
     limit: int = Query(default=50, le=200),
 ):
     filters = [Report.status == ReportStatus.approved]
+    challenge = None
 
-    if week_start and week_end:
+    if current_challenge:
+        challenge = await ensure_current_challenge(db)
+        await db.commit()
+        filters.append(Report.challenge_id == challenge.id)
+
+    if not current_challenge and week_start and week_end:
         try:
             ws = date.fromisoformat(week_start)
             we = date.fromisoformat(week_end)
@@ -46,6 +55,7 @@ async def leaderboard(
 
     base = (
         select(
+            User.id,
             User.telegram_id,
             User.first_name,
             User.username,
@@ -60,8 +70,13 @@ async def leaderboard(
         )
         .select_from(User)
         .outerjoin(Report, Report.user_id == User.id)
-        .group_by(User.telegram_id, User.first_name, User.username, User.city, User.level)
+        .group_by(User.id, User.telegram_id, User.first_name, User.username, User.city, User.level)
     )
+    if current_challenge and challenge:
+        base = base.join(
+            ChallengeRegistration,
+            (ChallengeRegistration.user_id == User.id) & (ChallengeRegistration.challenge_id == challenge.id),
+        )
 
     result = await db.execute(base)
     rows = result.all()
@@ -72,23 +87,25 @@ async def leaderboard(
     data = []
     for r in rows:
         entry = {
-            "telegram_id": r[0],
-            "name": r[1] or r[2] or "Unknown",
-            "username": r[2],
-            "city": r[3],
-            "level": r[4],
-            "pushups": r[5],
-            "squats": r[6],
-            "plank_seconds": r[7],
-            "pullups": r[8],
-            "abs": r[9],
-            "total_reports": r[10],
+            "id": str(r[0]),
+            "telegram_id": r[1],
+            "name": r[2] or r[3] or "Unknown",
+            "username": r[3],
+            "city": r[4],
+            "level": r[5],
+            "pushups": r[6],
+            "squats": r[7],
+            "plank_seconds": r[8],
+            "pullups": r[9],
+            "abs": r[10],
+            "total_reports": r[11],
             "streak": streak_map.get(r[0], 0),
         }
         data.append(entry)
 
     if exercise:
-        data.sort(key=lambda x: x[exercise.value], reverse=True)
+        key = "plank_seconds" if exercise == ExerciseType.plank else exercise.value
+        data.sort(key=lambda x: x[key], reverse=True)
     else:
         data.sort(key=lambda x: x["pushups"] + x["squats"] + x["plank_seconds"] + x["pullups"] + x["abs"], reverse=True)
 

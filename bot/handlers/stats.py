@@ -1,8 +1,9 @@
 import logging
-from datetime import date, timedelta
-from aiogram import Router, types
+
+from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
+
 from bot.services.api_client import ApiClient
 
 router = Router()
@@ -16,30 +17,39 @@ EXERCISE_LABELS = {
     "abs": "🔥 Пресс",
 }
 
+
 @router.message(Command("mystats"))
 async def cmd_mystats(message: Message):
-    tg_id = message.from_user.id
     api = ApiClient()
-    user = await api.get_user(tg_id)
-    if not user:
-        await message.answer("❌ Ты не зарегистрирован. Нажми /start")
-        return
-
-    stats = await api.get_user_stats(user["id"])
-    await api.close()
+    try:
+        stats = await api.get_current_stats(message.from_user.id)
+    finally:
+        await api.close()
 
     if not stats:
-        await message.answer("❌ Не удалось получить статистику")
+        await message.answer("Ты не зарегистрирован на текущий челлендж. Нажми /start")
         return
 
+    challenge = stats["challenge"]
     lines = [
-        "📊 <b>Твоя статистика</b>",
+        f"📊 <b>Челлендж №{challenge['number']}</b>",
+        f"Даты: <b>{challenge['starts_on']} — {challenge['ends_on']}</b>",
         "",
     ]
-    for ex, label in EXERCISE_LABELS.items():
-        val = stats.get(f"total_{ex}", 0)
-        unit = "сек" if ex == "plank" else "раз"
-        lines.append(f"{label}: <b>{val:,}</b> {unit}")
+    registration = stats.get("registration") or {}
+    if registration.get("exercises"):
+        lines.append("Твои упражнения:")
+        for item in registration["exercises"]:
+            lines.append(f"• {item['label']}: <b>{item['difficulty']}</b>")
+        lines.append("")
+
+    totals = stats.get("totals") or {}
+    for key, label in EXERCISE_LABELS.items():
+        item = totals.get(key)
+        if not item:
+            continue
+        unit = "сек" if key == "plank" else "раз"
+        lines.append(f"{label}: <b>{item['total']:,}</b> {unit} ({item['reports']} отч.)")
 
     lines.extend([
         "",
@@ -47,32 +57,31 @@ async def cmd_mystats(message: Message):
         f"🔥 Текущий стрик: <b>{stats['current_streak']}</b> дней",
         f"🏆 Рекорд: <b>{stats['longest_streak']}</b> дней",
     ])
-
     await message.answer("\n".join(lines))
+
 
 @router.message(Command("weekly"))
 async def cmd_weekly(message: Message):
     api = ApiClient()
-    today = date.today()
-    monday = today - timedelta(days=today.weekday())
-    sunday = monday + timedelta(days=6)
+    try:
+        lb = await api.get_leaderboard(current_challenge=True, limit=10)
+        announcement = await api.get_current_announcement()
+    finally:
+        await api.close()
 
-    lb = await api.get_leaderboard(week_start=monday.isoformat(), week_end=sunday.isoformat())
-    await api.close()
-
+    challenge = (announcement or {}).get("challenge") or {"number": "?", "starts_on": "—", "ends_on": "—"}
     if not lb:
-        await message.answer("📭 На этой неделе пока нет отчётов")
+        await message.answer(f"📭 В челлендже №{challenge['number']} пока нет отчётов")
         return
 
     lines = [
-        f"📅 <b>Неделя {monday.strftime('%d.%m')}–{sunday.strftime('%d.%m')}</b>",
+        f"🏁 <b>Топ-10 челленджа №{challenge['number']}</b>",
+        f"{challenge['starts_on']} — {challenge['ends_on']}",
         "",
     ]
-
     for i, entry in enumerate(lb[:10], 1):
         total = entry["pushups"] + entry["squats"] + entry["plank_seconds"] + entry["pullups"] + entry["abs"]
         medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(i, f"{i}.")
-        name = entry["name"]
-        lines.append(f"{medal} <b>{name}</b> — {total:,} всего")
+        lines.append(f"{medal} <b>{entry['name']}</b> — {total:,}")
 
     await message.answer("\n".join(lines))

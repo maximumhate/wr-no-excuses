@@ -18,8 +18,8 @@ export default function Login() {
         </div>
       </div>
       <div className="max-w-sm w-full text-center animate-scale-in">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl animated-gradient flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <Dumbbell className="w-8 h-8 text-white" />
+        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl animated-gradient flex items-center justify-center shadow-lg">
+          <Dumbbell className="w-8 h-8 text-[#090b0f]" />
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-1 gradient-text">WorldRun</h1>
         <p className="text-muted-foreground text-sm mb-10">No Excuses — фитнес-челлендж</p>

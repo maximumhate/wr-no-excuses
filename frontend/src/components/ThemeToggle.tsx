@@ -7,7 +7,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800/50 transition-all duration-300"
+      className="btn-ghost relative w-9 h-9 p-0"
       aria-label={theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'}
     >
       <Sun className={`w-4 h-4 absolute transition-all duration-300 ${theme === 'dark' ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'}`} />

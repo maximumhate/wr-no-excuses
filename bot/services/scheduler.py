@@ -19,6 +19,11 @@ async def daily_post(bot: Bot):
     from bot.services.notification import send_daily_post
     await send_daily_post(bot)
 
+
+async def weekly_challenge_announcement(bot: Bot):
+    from bot.services.notification import send_weekly_challenge_announcement
+    await send_weekly_challenge_announcement(bot)
+
 async def evening_reminder(bot: Bot):
     """Send reminders at 20:00 MSK to users who haven't reported today."""
     logger.info("Evening reminder placeholder — API integration TBD")
@@ -80,3 +85,12 @@ async def run_broadcast_scheduler(bot: Bot):
         except Exception as e:
             logger.error(f"Broadcast check failed: {e}")
         await asyncio.sleep(30)
+
+
+async def run_challenge_scheduler(bot: Bot):
+    while True:
+        try:
+            await weekly_challenge_announcement(bot)
+        except Exception as e:
+            logger.error(f"Weekly challenge check failed: {e}")
+        await asyncio.sleep(3600)

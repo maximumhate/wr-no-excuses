@@ -19,12 +19,14 @@ async def create_payment(
     user_id: uuid.UUID,
     plan: str,
     return_url: str,
+    amount: int | None = None,
+    title: str | None = None,
 ) -> dict | None:
     if not is_platega_configured():
         logger.warning("Platega not configured")
         return None
 
-    price = PLAN_PRICES.get(plan)
+    price = amount or PLAN_PRICES.get(plan)
     if not price:
         raise ValueError(f"Unknown plan: {plan}")
 
@@ -40,7 +42,7 @@ async def create_payment(
             "amount": price,
             "currency": "RUB",
         },
-        "description": f"WorldRun {plan.capitalize()}",
+        "description": f"WorldRun {title or plan.capitalize()}",
         "return": f"{return_url}?order_id={order_id}",
         "failedUrl": f"{return_url}?order_id={order_id}&error=failed",
         "payload": json.dumps({
