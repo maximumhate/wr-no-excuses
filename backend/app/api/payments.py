@@ -32,7 +32,7 @@ async def create_checkout(body: CreatePaymentRequest, user: User = Depends(get_c
     if not result:
         raise HTTPException(502, "Не удалось создать платёж")
 
-    amount_map = {"silver": 19900, "gold": 39900, "platinum": 69900}
+    amount_map = {"silver": 199, "gold": 399, "platinum": 699}
 
     payment = Payment(
         user_id=user.id,

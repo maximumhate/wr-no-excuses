@@ -7,9 +7,9 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 PLAN_PRICES = {
-    "silver": 19900,
-    "gold": 39900,
-    "platinum": 69900,
+    "silver": 199,
+    "gold": 399,
+    "platinum": 699,
 }
 
 def is_platega_configured() -> bool:
