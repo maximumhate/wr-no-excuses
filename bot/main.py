@@ -15,7 +15,7 @@ from bot.services.scheduler import run_broadcast_scheduler, run_challenge_schedu
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML, link_preview_is_disabled=True))
 dp = Dispatcher(storage=MemoryStorage())
 
 dp.include_router(start.router)

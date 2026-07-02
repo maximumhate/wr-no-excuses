@@ -1,13 +1,11 @@
 import logging
 import re
-from html import escape
 
 from aiogram import Router, types
 from aiogram.types import Message
 
 from bot.config import settings
 from bot.services.api_client import ApiClient
-from bot.services.rules import REPORT_FORMAT_TEXT, RULES_URL
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -48,26 +46,6 @@ EXERCISES = {
 }
 
 
-def user_mention(message: Message) -> str:
-    user = message.from_user
-    if not user:
-        return "Участник"
-    if user.username:
-        return f"@{escape(user.username)}"
-    name = escape(user.full_name or "участник")
-    return f"<a href='tg://user?id={user.id}'>{name}</a>"
-
-
-def report_help_text(mention: str, reason: str) -> str:
-    return (
-        f"{mention}, {reason}\n\n"
-        "В комментарии к каналу можно отправлять только отчёты. "
-        "Отчёт должен быть видео/кружком с caption.\n\n"
-        f"<pre>{REPORT_FORMAT_TEXT}</pre>\n\n"
-        f"Правила: <a href='{RULES_URL}'>читать</a>"
-    )
-
-
 async def safe_delete(message: Message) -> None:
     try:
         await message.delete()
@@ -76,10 +54,7 @@ async def safe_delete(message: Message) -> None:
 
 
 async def warn_and_delete(message: Message, reason: str) -> None:
-    try:
-        await message.answer(report_help_text(user_mention(message), reason))
-    except Exception as e:
-        logger.warning(f"Could not send report warning: {e}")
+    logger.info(f"Deleting invalid report message {message.message_id}: {reason}")
     await safe_delete(message)
 
 
@@ -196,7 +171,7 @@ async def handle_report(message: Message):
                 thread_message_id=thread_message_id,
             )
             if not resp:
-                await message.reply(f"❌ Не смог сохранить отчёт. {api.last_error or 'Попробуйте ещё раз позже.'}")
+                logger.warning(f"Could not save report message {message.message_id}: {api.last_error}")
                 return
             responses.append(resp)
     finally:
@@ -207,23 +182,9 @@ async def handle_report(message: Message):
     except Exception:
         pass
 
-    parts = []
-    for ex_type, value in exercises_found.items():
-        meta = EXERCISES[ex_type]
-        parts.append(f"{meta['emoji']} {meta['label']}: <b>{value}</b> {meta['unit']}")
-    confirmation = "\n".join(parts)
-
     achievements = {}
     for resp in responses:
         for ach in resp.get("new_achievements", []) or []:
             achievements[ach["slug"]] = ach
-    ach_text = ""
     if achievements:
-        ach_lines = [f"{a['icon']} <b>{a['title']}</b>" for a in achievements.values()]
-        ach_text = "\n\n🏅 <b>Новое достижение!</b>\n" + "\n".join(ach_lines)
-
-    await message.reply(
-        f"✅ <b>Отчёт принят!</b>\n\n{confirmation}"
-        f"{ach_text}\n\n"
-        "📊 Моя статистика: /mystats"
-    )
+        logger.info(f"New achievements for message {message.message_id}: {', '.join(achievements)}")
