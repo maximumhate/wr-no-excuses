@@ -8,7 +8,6 @@ interface Broadcast {
   caption: string | null
   media_type: string | null
   file_name: string | null
-  send_mode: string
   status: string
   total_users: number
   sent_count: number
@@ -28,8 +27,6 @@ interface Delivery {
 
 export default function AdminBroadcast() {
   const [text, setText] = useState('')
-  const [caption, setCaption] = useState('')
-  const [sendMode, setSendMode] = useState<'caption' | 'separate'>('caption')
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<string | null>(null)
@@ -42,19 +39,16 @@ export default function AdminBroadcast() {
   useEffect(() => { loadBroadcasts() }, [])
 
   const handleSend = async () => {
-    if (!text.trim() && !caption.trim() && !file) return
+    if (!text.trim() && !file) return
     setSending(true)
     setResult(null)
     const form = new FormData()
     if (text.trim()) form.append('text', text.trim())
-    if (caption.trim()) form.append('caption', caption.trim())
-    form.append('send_mode', sendMode)
     if (file) form.append('file', file)
     try {
       const res = await api.postForm<{ ok: boolean; message: string }>('/admin/broadcast/send', form)
       setResult(`✅ ${res.message}`)
       setText('')
-      setCaption('')
       setFile(null)
       loadBroadcasts()
     } catch {
@@ -79,20 +73,13 @@ export default function AdminBroadcast() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="neo-card p-4 md:p-6 space-y-4">
-          <textarea className="control w-full h-32 resize-none" placeholder="Текст рассылки или отдельное сообщение..." value={text} onChange={e => setText(e.target.value)} />
-          <textarea className="control w-full h-24 resize-none" placeholder="Caption к файлу/картинке, если нужен отдельный caption..." value={caption} onChange={e => setCaption(e.target.value)} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label className="neo-card p-4 cursor-pointer flex items-center gap-3">
-              {file?.type.startsWith('image/') ? <Image className="w-5 h-5 text-accent" /> : <FileUp className="w-5 h-5 text-accent" />}
-              <div className="min-w-0"><div className="font-bold text-foreground">{file ? file.name : 'Прикрепить файл'}</div><div className="text-xs text-muted-foreground">Фото, видео или документ</div></div>
-              <input type="file" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
-            </label>
-            <select className="control" value={sendMode} onChange={e => setSendMode(e.target.value as any)}>
-              <option value="caption">Файл с caption одним сообщением</option>
-              <option value="separate">Файл и текст отдельно</option>
-            </select>
-          </div>
-          <button onClick={handleSend} disabled={sending || (!text.trim() && !caption.trim() && !file)} className="btn-primary">
+          <textarea className="control w-full h-32 resize-none" placeholder="Текст рассылки. Если прикреплён файл, текст уйдёт caption к файлу." value={text} onChange={e => setText(e.target.value)} />
+          <label className="neo-card p-4 cursor-pointer flex items-center gap-3">
+            {file?.type.startsWith('image/') ? <Image className="w-5 h-5 text-accent" /> : <FileUp className="w-5 h-5 text-accent" />}
+            <div className="min-w-0"><div className="font-bold text-foreground">{file ? file.name : 'Прикрепить файл'}</div><div className="text-xs text-muted-foreground">Фото, видео или документ. Без текста файл уйдёт отдельно.</div></div>
+            <input type="file" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+          </label>
+          <button onClick={handleSend} disabled={sending || (!text.trim() && !file)} className="btn-primary">
             <Send className="w-4 h-4" /> {sending ? 'Отправка...' : 'Отправить всем'}
           </button>
           {result && <p className="text-sm text-secondary">{result}</p>}
@@ -102,9 +89,9 @@ export default function AdminBroadcast() {
           <h2 className="font-bold text-foreground mb-4">Preview</h2>
           <div className="rounded-2xl border border-default bg-[var(--bg-inset)] p-4 space-y-3">
             {file && <div className="badge">{file.type || 'file'} · {file.name}</div>}
-            {sendMode === 'caption' && (caption || text) && <p className="text-secondary whitespace-pre-wrap">{caption || text}</p>}
-            {sendMode === 'separate' && text && <p className="text-secondary whitespace-pre-wrap">{text}</p>}
-            {!file && !text && !caption && <p className="text-muted-foreground text-sm">Заполни форму, чтобы увидеть пример.</p>}
+            {text && <p className="text-secondary whitespace-pre-wrap">{text}</p>}
+            {file && !text && <p className="text-muted-foreground text-sm">Файл будет отправлен без текста.</p>}
+            {!file && !text && <p className="text-muted-foreground text-sm">Заполни форму, чтобы увидеть пример.</p>}
           </div>
         </div>
       </div>

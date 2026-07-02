@@ -517,15 +517,10 @@ async def admin_broadcast_send(
     admin: AdminUser = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
     text_value: str | None = Form(None, alias="text"),
-    caption: str | None = Form(None),
-    send_mode: str = Form("caption"),
     upload: UploadFile | None = File(None, alias="file"),
 ):
     text_clean = (text_value or "").strip()
-    caption_clean = (caption or "").strip()
-    if send_mode not in ("caption", "separate"):
-        raise HTTPException(400, "send_mode must be caption or separate")
-    if not text_clean and not caption_clean and not upload:
+    if not text_clean and not upload:
         raise HTTPException(400, "Добавьте текст или файл")
     if not settings.bot_token:
         raise HTTPException(503, "BOT_TOKEN не настроен")
@@ -536,12 +531,13 @@ async def admin_broadcast_send(
     content_type = upload.content_type if upload else None
 
     users = (await db.execute(select(User.id, User.telegram_id).where(User.is_active == True).order_by(User.registered_at))).all()
+    media_caption = text_clean if media_type else None
     broadcast = Broadcast(
-        text=text_clean or None,
-        caption=caption_clean or None,
+        text=None if media_type else text_clean or None,
+        caption=media_caption,
         media_type=media_type,
         file_name=file_name,
-        send_mode=send_mode,
+        send_mode="caption",
         status="sending",
         total_users=len(users),
     )
@@ -557,7 +553,6 @@ async def admin_broadcast_send(
             error = None
             try:
                 if media_type and file_bytes is not None and file_name:
-                    media_caption = caption_clean or text_clean if send_mode == "caption" else None
                     ok, message_id, error = await send_telegram_media(
                         client,
                         telegram_id,
@@ -567,10 +562,8 @@ async def admin_broadcast_send(
                         content_type or "application/octet-stream",
                         media_caption,
                     )
-                    if ok and send_mode == "separate" and text_clean:
-                        ok, message_id, error = await send_telegram_message(client, telegram_id, text_clean)
                 else:
-                    ok, message_id, error = await send_telegram_message(client, telegram_id, text_clean or caption_clean)
+                    ok, message_id, error = await send_telegram_message(client, telegram_id, text_clean)
             except Exception as exc:
                 ok = False
                 error = str(exc)[:1000]
