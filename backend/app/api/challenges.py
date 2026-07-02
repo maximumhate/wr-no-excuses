@@ -1,6 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, select
@@ -14,6 +12,7 @@ from app.models.report import ExerciseType, Report
 from app.models.streak import Streak
 from app.models.subscription import Subscription
 from app.models.user import User
+from app.api.users import get_current_user
 from app.services.challenges import ensure_current_challenge, serialize_challenge
 from app.services.exercises import EXERCISE_TYPES, EXERCISES, get_exercise_label
 
@@ -95,6 +94,18 @@ async def current_challenge(db: AsyncSession = Depends(get_db)):
     challenge = await ensure_current_challenge(db)
     await db.commit()
     return serialize_challenge(challenge)
+
+
+@router.get("/me")
+async def my_current_challenge(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    challenge = await ensure_current_challenge(db)
+    registration = await get_current_registration(user.id, challenge.id, db)
+    await db.commit()
+    return {
+        "challenge": serialize_challenge(challenge),
+        "registration": serialize_registration(registration),
+        "is_registered": registration is not None,
+    }
 
 
 @router.get("/exercises")

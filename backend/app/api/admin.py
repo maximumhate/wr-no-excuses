@@ -22,8 +22,10 @@ from app.models.streak import Streak
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
+from app.services.achievements import check_achievements
 from app.services.challenges import ensure_current_challenge, serialize_challenge
 from app.services.exercises import EXERCISE_TYPES, EXERCISES, get_exercise_label
+from app.services.streak import update_streak
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 MSK = timezone(timedelta(hours=3))
@@ -345,6 +347,10 @@ async def admin_update_report(report_id: uuid.UUID, data: ReportUpdate, admin: A
         raise HTTPException(404, "Report not found")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(report, field, value)
+    if data.status == ReportStatus.approved:
+        await db.flush()
+        await update_streak(report.user_id, db)
+        await check_achievements(report.user_id, db)
     await db.commit()
     await db.refresh(report)
     return report

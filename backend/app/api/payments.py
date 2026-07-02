@@ -12,6 +12,7 @@ from app.models.payment import Payment, PaymentStatus
 from app.models.subscription import Subscription, PlanType
 from app.models.cms import SubscriptionTariff
 from app.api.users import get_current_user
+from app.services.achievements import check_achievements
 from app.services.payment import create_payment, is_platega_configured, verify_webhook
 
 logger = logging.getLogger(__name__)
@@ -154,6 +155,7 @@ async def payment_webhook(
             db.add(sub)
 
         await db.commit()
+        await check_achievements(payment.user_id, db)
         logger.info(f"Payment {provider_payment_id} succeeded for user {payment.user_id}")
     elif new_status == "cancelled":
         payment.status = PaymentStatus.cancelled

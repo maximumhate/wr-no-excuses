@@ -28,6 +28,11 @@ interface Challenge {
   ends_on: string
 }
 
+interface ChallengeMe {
+  challenge: Challenge
+  is_registered: boolean
+}
+
 const EXERCISES = [
   { key: 'pushups', stat: 'total_pushups', label: 'Отжимания', unit: 'раз', icon: Dumbbell, color: '#35d07f' },
   { key: 'squats', stat: 'total_squats', label: 'Приседания', unit: 'раз', icon: Target, color: '#45d3ff' },
@@ -55,14 +60,21 @@ export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [history, setHistory] = useState<Report[]>([])
   const [challenge, setChallenge] = useState<Challenge | null>(null)
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null)
 
   useEffect(() => {
-    api.get<Challenge>('/challenges/current').then(setChallenge).catch(console.error)
+    api.get<ChallengeMe>('/challenges/me').then(data => {
+      setChallenge(data.challenge)
+      setIsRegistered(data.is_registered)
+    }).catch(() => {
+      api.get<Challenge>('/challenges/current').then(setChallenge).catch(console.error)
+      setIsRegistered(Boolean(user?.is_participant))
+    })
     api.get<Stats>('/reports/stats?current_challenge=true').then(setStats).catch(console.error)
     api.get<Report[]>('/reports/history?limit=60').then(setHistory).catch(console.error)
-  }, [])
+  }, [user?.is_participant])
 
-  const isParticipant = user?.is_participant
+  const shouldShowRegistrationNotice = isRegistered === false
   const chartData = aggregateHistory(history)
   const pieData = stats ? EXERCISES.map(ex => ({ name: ex.label, value: (stats as any)[ex.stat] || 0, color: ex.color })).filter(x => x.value > 0) : []
 
@@ -99,7 +111,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {!isParticipant && (
+      {shouldShowRegistrationNotice && (
         <div className="neo-card p-4 text-sm text-warning">
           Чтобы участвовать в челлендже, зарегистрируйся в боте через /start.
         </div>

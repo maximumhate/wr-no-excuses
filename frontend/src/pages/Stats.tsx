@@ -68,8 +68,8 @@ export default function Stats() {
           {EXERCISE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input className="control w-full pl-10" placeholder="Имя, username, город, TG ID" value={filter.search} onChange={e => setFilter(f => ({...f, search: e.target.value}))} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input className="control w-full pl-12" placeholder="Поиск: имя, username, город, TG ID" value={filter.search} onChange={e => setFilter(f => ({...f, search: e.target.value}))} />
         </div>
       </div>
 

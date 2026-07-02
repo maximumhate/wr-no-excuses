@@ -58,10 +58,25 @@ export default function Rules() {
             <ListChecks className="w-5 h-5" />
             <h2 className="font-semibold text-foreground">Уровни сложности</h2>
           </div>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p><span className="text-green-400 font-medium">Новичок</span> — до 30 секунд</p>
-            <p><span className="text-yellow-400 font-medium">Любитель</span> — от 30 секунд до 3 минут</p>
-            <p><span className="text-red-400 font-medium">Профи</span> — больше 3 минут</p>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <div>
+              <p className="font-semibold text-foreground">Планка</p>
+              <p><span className="text-green-400 font-medium">Новичок</span> — 0-30 секунд</p>
+              <p><span className="text-yellow-400 font-medium">Любитель</span> — 30 секунд - 3 минуты</p>
+              <p><span className="text-red-400 font-medium">Профи</span> — 3 минуты+</p>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Присед, отжим, пресс</p>
+              <p><span className="text-green-400 font-medium">Новичок</span> — 0-30 раз</p>
+              <p><span className="text-yellow-400 font-medium">Любитель</span> — 30-60 раз</p>
+              <p><span className="text-red-400 font-medium">Профи</span> — 60+ раз</p>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Подтягивания</p>
+              <p><span className="text-green-400 font-medium">Новичок</span> — 0-5 раз</p>
+              <p><span className="text-yellow-400 font-medium">Любитель</span> — 5-15 раз</p>
+              <p><span className="text-red-400 font-medium">Профи</span> — 15+ раз</p>
+            </div>
           </div>
         </div>
 

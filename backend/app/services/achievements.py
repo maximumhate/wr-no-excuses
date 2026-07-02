@@ -33,7 +33,7 @@ async def seed_achievements(db: AsyncSession):
     await db.commit()
 
 async def get_achievement_by_slug(slug: str, db: AsyncSession) -> Achievement | None:
-    result = await db.execute(select(Achievement).where(Achievement.slug == slug))
+    result = await db.execute(select(Achievement).where(Achievement.slug == slug, Achievement.is_active == True))
     return result.scalar_one_or_none()
 
 async def award(user_id, slug, db):

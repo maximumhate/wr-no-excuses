@@ -66,7 +66,6 @@ export default function Subscription() {
           const isCurrent = plan.plan === currentPlan
           return (
             <div key={plan.plan} className={`neo-card panel-line p-5 flex flex-col ${isCurrent ? 'ring-2 ring-accent/60' : ''}`}>
-              <div className="badge mb-5">{plan.accent || plan.plan}</div>
               <h3 className="font-display text-2xl text-foreground">{plan.name}</h3>
               <p className="text-3xl font-extrabold text-accent mt-2 mb-5">{priceText(plan)}</p>
               <ul className="flex-1 space-y-3 mb-6">
