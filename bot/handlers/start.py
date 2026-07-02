@@ -5,6 +5,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.config import settings
+from bot.services.rules import REPORT_FORMAT_TEXT, RULES_SHORT_HTML
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -33,9 +34,10 @@ async def cmd_start(message: Message):
         "где ты соревнуешься сам с собой и с другими.\n\n"
         "📌 <b>Как это работает:</b>\n"
         "• Каждый день в 00:01 я публикую пост с заданиями\n"
-        "• Ты отвечаешь в треде с хештегом упражнения: #отжимания #приседания #планка #подтягивания #пресс\n"
+        "• Ты отвечаешь в треде видео/кружком с caption #отчет\n"
         "• Я проверяю отчёт и засчитываю результат\n"
         "• За регулярность — стрики и достижения\n\n"
+        f"{RULES_SHORT_HTML}\n\n"
         "👇 Нажми <b>Зарегистрироваться</b>, чтобы начать!"
     )
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -75,12 +77,8 @@ async def register_start(callback: types.CallbackQuery):
         "✅ <b>Ты зарегистрирован!</b>\n\n"
         "Теперь ты можешь оставлять отчёты в чате канала.\n\n"
         "📌 <b>Формат отчёта:</b>\n"
-        "Напиши в ответ на пост дня:\n"
-        "#отжимания 50\n"
-        "#приседания 100\n"
-        "#планка 120\n"
-        "#подтягивания 15\n"
-        "#пресс 50\n\n"
-        "Цифры — количество раз или секунд для планки."
+        "Отправь видео/кружок с caption:\n"
+        f"<pre>{REPORT_FORMAT_TEXT}</pre>\n\n"
+        "Для планки можно писать секунды или минуты/секунды."
     )
     await callback.answer()

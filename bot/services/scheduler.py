@@ -46,7 +46,7 @@ async def process_pending_broadcasts(bot: Bot):
                 except Exception as e:
                     logger.warning(f"Failed to send to {tg_id}: {e}")
 
-            await api.complete_broadcast(b_id)
+            await api.complete_broadcast(b_id, sent)
             logger.info(f"Broadcast {b_id} done: {sent}/{total} sent")
     except Exception as e:
         logger.error(f"Broadcast polling failed: {e}")
@@ -73,8 +73,10 @@ async def run_scheduler(bot: Bot):
         except Exception as e:
             logger.error(f"Reminder failed: {e}")
 
-        # Check for pending broadcasts every cycle
+async def run_broadcast_scheduler(bot: Bot):
+    while True:
         try:
             await process_pending_broadcasts(bot)
         except Exception as e:
             logger.error(f"Broadcast check failed: {e}")
+        await asyncio.sleep(30)

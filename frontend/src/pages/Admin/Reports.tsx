@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../api/client'
-import { Check, X } from 'lucide-react'
+import { Check, ExternalLink, X } from 'lucide-react'
 
 interface Report {
   id: string
   user_id: string
   exercise_type: string
   value: number
+  telegram_chat_id: number | null
+  telegram_message_id: number | null
   report_date: string
   status: string
   created_at: string
@@ -32,6 +34,13 @@ const statusColors: Record<string, string> = {
   pending: 'text-yellow-400',
   approved: 'text-green-400',
   rejected: 'text-red-400',
+}
+
+function getTelegramMessageUrl(report: Report) {
+  if (!report.telegram_chat_id || !report.telegram_message_id) return null
+  const chatId = String(report.telegram_chat_id)
+  if (!chatId.startsWith('-100')) return null
+  return `https://t.me/c/${chatId.slice(4)}/${report.telegram_message_id}`
 }
 
 export default function AdminReports() {
@@ -82,6 +91,7 @@ export default function AdminReports() {
                 <th className="text-left p-3 font-medium">Дата</th>
                 <th className="text-left p-3 font-medium">Упражнение</th>
                 <th className="text-left p-3 font-medium">Значение</th>
+                <th className="text-left p-3 font-medium">Сообщение</th>
                 <th className="text-left p-3 font-medium">Статус</th>
                 <th className="text-left p-3 font-medium">Действия</th>
               </tr>
@@ -98,6 +108,20 @@ export default function AdminReports() {
                       <input className="w-20 bg-gray-800 border border-gray-700/50 rounded px-2 py-1 text-white text-sm outline-none focus:border-blue-500/50" type="number" value={editValue} onChange={e => setEditValue(+e.target.value)} />
                     ) : (
                       <span className="font-medium text-white">{r.value}{r.exercise_type === 'plank' ? ' сек' : ''}</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {getTelegramMessageUrl(r) ? (
+                      <a
+                        href={getTelegramMessageUrl(r)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 text-xs font-medium"
+                      >
+                        Открыть <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <span className="text-gray-600 text-xs">нет ссылки</span>
                     )}
                   </td>
                   <td className={`p-3 font-medium text-xs ${statusColors[r.status] || ''}`}>
@@ -123,7 +147,7 @@ export default function AdminReports() {
                   </td>
                 </tr>
               ))}
-              {reports.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-gray-500 text-sm">Нет отчётов</td></tr>}
+              {reports.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-500 text-sm">Нет отчётов</td></tr>}
             </tbody>
           </table>
         </div>

@@ -9,7 +9,7 @@ from aiohttp import web
 
 from bot.config import settings
 from bot.handlers import start, report, subscription, admin, stats
-from bot.services.scheduler import run_scheduler
+from bot.services.scheduler import run_broadcast_scheduler, run_scheduler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,10 +18,10 @@ bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=Pars
 dp = Dispatcher()
 
 dp.include_router(start.router)
-dp.include_router(report.router)
 dp.include_router(subscription.router)
 dp.include_router(admin.router)
 dp.include_router(stats.router)
+dp.include_router(report.router)
 
 async def on_startup():
     await bot.set_webhook(f"{settings.app_url}/webhook/bot")
@@ -34,6 +34,7 @@ async def on_startup():
         BotCommand(command="chatid", description="ID текущего чата"),
     ], scope=BotCommandScopeDefault())
     asyncio.create_task(run_scheduler(bot))
+    asyncio.create_task(run_broadcast_scheduler(bot))
 
 async def on_shutdown():
     await bot.delete_webhook()

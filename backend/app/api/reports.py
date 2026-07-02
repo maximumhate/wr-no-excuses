@@ -23,6 +23,9 @@ async def create_report(data: ReportCreate, user: User = Depends(get_current_use
         exercise_type=data.exercise_type,
         value=data.value,
         report_date=data.report_date or date.today(),
+        telegram_chat_id=data.telegram_chat_id,
+        telegram_message_id=data.telegram_message_id,
+        thread_message_id=data.thread_message_id,
         status=ReportStatus.approved,
     )
     db.add(report)
@@ -35,6 +38,9 @@ async def create_report(data: ReportCreate, user: User = Depends(get_current_use
         "id": str(report.id),
         "exercise_type": report.exercise_type.value,
         "value": report.value,
+        "telegram_chat_id": report.telegram_chat_id,
+        "telegram_message_id": report.telegram_message_id,
+        "thread_message_id": report.thread_message_id,
         "report_date": str(report.report_date),
         "status": report.status.value,
         "created_at": report.created_at.isoformat(),

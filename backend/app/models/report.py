@@ -22,6 +22,7 @@ class Report(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
     telegram_message_id: Mapped[int | None] = mapped_column(BigInteger)
     thread_message_id: Mapped[int | None] = mapped_column(BigInteger)
     exercise_type: Mapped[ExerciseType] = mapped_column(SAEnum(ExerciseType), nullable=False)

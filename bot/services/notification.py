@@ -1,7 +1,7 @@
 import logging
 from aiogram import Bot
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from bot.config import settings
+from bot.services.rules import REPORT_FORMAT_HTML, RULES_SHORT_HTML
 
 logger = logging.getLogger(__name__)
 
@@ -9,11 +9,10 @@ async def send_daily_post(bot: Bot):
     """Post daily workout challenge to the channel."""
     text = (
         "🌅 <b>Доброе утро, чемпионы!</b>\n\n"
-        "Сегодняшние задания:\n"
-        "💪 #отжимания — сколько сможешь\n"
-        "🦵 #приседания — количество\n"
-        "🧘 #планка — время в секундах\n\n"
-        "👇 Отвечай в этом треде с хештегом и числом"
+        "В этот тред можно отправлять только отчёты. Любой другой текст будет удалён.\n\n"
+        "<b>Обязательно:</b> видео или кружок + caption в этом же сообщении.\n\n"
+        f"<pre>{REPORT_FORMAT_HTML}</pre>\n\n"
+        f"{RULES_SHORT_HTML}"
     )
     try:
         msg = await bot.send_message(

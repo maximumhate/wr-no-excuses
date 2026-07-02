@@ -1,9 +1,10 @@
 import uuid
 from datetime import date, timedelta
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
+from app.config import settings
 from app.database import get_db
 from app.models.admin_user import AdminUser
 from app.models.user import User
@@ -17,6 +18,11 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 async def require_admin(admin: AdminUser = Depends(get_current_admin)) -> AdminUser:
     return admin
+
+async def require_admin_or_bot(request: Request, db: AsyncSession = Depends(get_db)) -> AdminUser | None:
+    if request.headers.get("X-Bot-Secret") == settings.secret_key:
+        return None
+    return await get_current_admin(request, db)
 
 @router.get("/dashboard")
 async def admin_dashboard(admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
@@ -162,6 +168,9 @@ async def admin_update_report(report_id: uuid.UUID, data: ReportUpdate, admin: A
 class BroadcastRequest(BaseModel):
     text: str
 
+class BroadcastCompleteRequest(BaseModel):
+    sent_count: int | None = None
+
 @router.post("/broadcast")
 async def admin_broadcast(data: BroadcastRequest, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(func.count(User.id)).where(User.is_active == True))
@@ -178,7 +187,7 @@ async def admin_broadcast(data: BroadcastRequest, admin: AdminUser = Depends(req
     }
 
 @router.get("/broadcast/pending")
-async def admin_pending_broadcasts(admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_pending_broadcasts(auth: AdminUser | None = Depends(require_admin_or_bot), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Broadcast).where(Broadcast.sent_at.is_(None)).order_by(Broadcast.created_at)
     )
@@ -193,11 +202,25 @@ async def admin_pending_broadcasts(admin: AdminUser = Depends(require_admin), db
         for b in broadcasts
     ]
 
+@router.get("/broadcast/users")
+async def admin_broadcast_users(auth: AdminUser | None = Depends(require_admin_or_bot), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(User.telegram_id).where(User.is_active == True).order_by(User.registered_at)
+    )
+    return [{"telegram_id": tg_id} for tg_id in result.scalars().all()]
+
 @router.patch("/broadcast/{broadcast_id}/complete")
-async def admin_complete_broadcast(broadcast_id: uuid.UUID, admin: AdminUser = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+async def admin_complete_broadcast(
+    broadcast_id: uuid.UUID,
+    data: BroadcastCompleteRequest | None = None,
+    auth: AdminUser | None = Depends(require_admin_or_bot),
+    db: AsyncSession = Depends(get_db),
+):
     broadcast = await db.get(Broadcast, broadcast_id)
     if not broadcast:
         raise HTTPException(404, "Broadcast not found")
+    if data and data.sent_count is not None:
+        broadcast.sent_count = data.sent_count
     broadcast.sent_at = func.now()
     await db.commit()
     return {"ok": True}

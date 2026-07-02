@@ -7,12 +7,18 @@ class ReportCreate(BaseModel):
     exercise_type: ExerciseType
     value: int
     report_date: date | None = None
+    telegram_chat_id: int | None = None
+    telegram_message_id: int | None = None
+    thread_message_id: int | None = None
 
 class ReportResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     exercise_type: ExerciseType
     value: int
+    telegram_chat_id: int | None = None
+    telegram_message_id: int | None = None
+    thread_message_id: int | None = None
     report_date: date
     status: ReportStatus
     created_at: datetime
