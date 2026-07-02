@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { adminLogout } from '../api/adminAuth'
 import { LayoutDashboard, Users, FileText, Send, LogOut, Shield } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 const adminItems = [
   { path: '/admin', label: 'Панель', icon: LayoutDashboard },
@@ -45,9 +46,10 @@ export default function AdminLayout() {
                 {item.label}
               </Link>
             ))}
+            <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800/50 rounded-lg text-sm transition-colors ml-2"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-muted-foreground hover:text-red-400 hover:bg-surface/50 rounded-lg text-sm transition-colors ml-2"
             >
               <LogOut className="w-4 h-4" />
               Выйти

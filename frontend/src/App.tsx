@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Stats from './pages/Stats'
 import Subscription from './pages/Subscription'
 import Achievements from './pages/Achievements'
+import Rules from './pages/Rules'
 import AdminDashboard from './pages/Admin/Dashboard'
 import AdminUsers from './pages/Admin/Users'
 import AdminBroadcast from './pages/Admin/Broadcast'
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="stats" element={<Stats />} />
         <Route path="subscription" element={<Subscription />} />
         <Route path="achievements" element={<Achievements />} />
+        <Route path="rules" element={<Rules />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

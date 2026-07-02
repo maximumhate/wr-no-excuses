@@ -88,20 +88,20 @@ export default function Dashboard() {
   const chartColors = ['#22C55E', '#3B82F6', '#A855F7', '#F97316', '#EC4899']
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-stagger">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">
             Привет, {user?.first_name || 'чемпион'}!
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Твой фитнес-челлендж</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Твой фитнес-челлендж</p>
         </div>
         <button
           onClick={() => setWeekMode(w => !w)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
             weekMode
-              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-              : 'bg-gray-800/50 text-gray-400 border border-gray-700/50'
+              ? 'bg-accent/15 text-accent border border-accent/30'
+              : 'bg-secondary text-muted-foreground border border-default'
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -110,26 +110,26 @@ export default function Dashboard() {
       </div>
 
       {!isParticipant && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-sm text-amber-300">
+        <div className="bg-warning/10 border border-warning/20 rounded-xl p-4 text-sm text-warning">
           ⚠️ Чтобы участвовать в челлендже, зарегистрируйся в боте{' '}
-          <a href="https://t.me/wr_no_excuses_reg_bot" className="text-blue-400 underline">@wr_no_excuses_reg_bot</a>
+          <a href="https://t.me/wr_no_excuses_reg_bot" className="text-accent underline">@wr_no_excuses_reg_bot</a>
           {' '}через /start
         </div>
       )}
 
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {EXERCISES.map(ex => {
+          {EXERCISES.map((ex, i) => {
             const val = (stats as any)[`total_${ex.key}`] ?? 0
             return (
-              <div key={ex.key} className={`${ex.bg} ${ex.border} border rounded-xl p-4 card-hover`}>
+              <div key={ex.key} className="card p-4 animate-scale-in" style={{ animationDelay: `${i * 0.05}s` }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-xs">{ex.label}</span>
+                  <span className="text-muted-foreground text-xs">{ex.label}</span>
                   <ex.icon className={`w-4 h-4 ${ex.color}`} />
                 </div>
                 <div className={`text-xl md:text-2xl font-bold ${ex.color}`}>
                   {val.toLocaleString()}
-                  <span className="text-xs text-gray-600 ml-1">{ex.unit}</span>
+                  <span className="text-xs text-muted-foreground ml-1">{ex.unit}</span>
                 </div>
               </div>
             )
@@ -140,18 +140,18 @@ export default function Dashboard() {
       {stats && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Текущий стрик', value: stats.current_streak, unit: 'дн', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
-            { label: 'Рекорд', value: stats.longest_streak, unit: 'дн', icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
-            { label: 'Всего', value: totalAll, unit: '', icon: Activity, color: 'text-gray-300', bg: 'bg-gray-500/10', border: 'border-gray-500/20' },
-          ].map(card => (
-            <div key={card.label} className={`${card.bg} ${card.border} border rounded-xl p-4 card-hover`}>
+            { label: 'Текущий стрик', value: stats.current_streak, unit: 'дн', icon: Flame, color: 'text-orange-400' },
+            { label: 'Рекорд', value: stats.longest_streak, unit: 'дн', icon: Trophy, color: 'text-yellow-400' },
+            { label: 'Всего', value: totalAll, unit: '', icon: Activity, color: 'text-foreground' },
+          ].map((card, i) => (
+            <div key={card.label} className="card p-4 animate-scale-in" style={{ animationDelay: `${(i + 5) * 0.05}s` }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-xs">{card.label}</span>
+                <span className="text-muted-foreground text-xs">{card.label}</span>
                 <card.icon className={`w-4 h-4 ${card.color}`} />
               </div>
               <div className={`text-lg md:text-xl font-bold ${card.color}`}>
                 {card.value.toLocaleString()}
-                {card.unit && <span className="text-xs text-gray-600 ml-1">{card.unit}</span>}
+                {card.unit && <span className="text-xs text-muted-foreground ml-1">{card.unit}</span>}
               </div>
             </div>
           ))}
@@ -159,19 +159,19 @@ export default function Dashboard() {
       )}
 
       {chartData.length > 0 && (
-        <div className="glass rounded-xl p-4 md:p-6 card-hover">
-          <h2 className="text-sm md:text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-blue-400" />
+        <div className="card p-4 md:p-6 animate-fade-in">
+          <h2 className="text-sm md:text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-accent" />
             Прогресс (последние 30 отчётов)
           </h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="date" stroke="#4B5563" tick={{ fontSize: 11 }} />
-              <YAxis stroke="#4B5563" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="date" stroke="var(--text-muted)" tick={{ fontSize: 11 }} />
+              <YAxis stroke="var(--text-muted)" />
               <Tooltip
-                contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px', fontSize: '12px' }}
-                labelStyle={{ color: '#9CA3AF' }}
+                contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-primary)' }}
+                labelStyle={{ color: 'var(--text-secondary)' }}
               />
               <Bar dataKey="Отжимания" fill={chartColors[0]} radius={[3,3,0,0]} stackId="a" />
               <Bar dataKey="Приседания" fill={chartColors[1]} radius={[3,3,0,0]} stackId="a" />
@@ -184,15 +184,15 @@ export default function Dashboard() {
       )}
 
       {history.length > 0 && (
-        <div className="glass rounded-xl p-4 md:p-6 card-hover">
-          <h2 className="text-sm md:text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-blue-400" />
+        <div className="card p-4 md:p-6 animate-fade-in">
+          <h2 className="text-sm md:text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-accent" />
             Последние отчёты
           </h2>
           <div className="overflow-x-auto hide-scrollbar">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-500 border-b border-gray-800">
+                <tr className="text-muted-foreground border-b border-default">
                   <th className="text-left p-2 font-medium">Дата</th>
                   <th className="text-left p-2 font-medium">Упражнение</th>
                   <th className="text-right p-2 font-medium">Результат</th>
@@ -200,12 +200,12 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {history.slice(0, 10).map(r => (
-                  <tr key={r.id} className="border-b border-gray-800/50 text-gray-300 hover:bg-gray-800/30 transition-colors">
-                    <td className="p-2 text-gray-400 text-xs">{r.report_date}</td>
+                  <tr key={r.id} className="border-b border-default/50 text-secondary hover:bg-surface/30 transition-colors">
+                    <td className="p-2 text-muted-foreground text-xs">{r.report_date}</td>
                     <td className="p-2">
                       {LABEL_MAP[r.exercise_type] || r.exercise_type}
                     </td>
-                    <td className="p-2 text-right font-medium text-white">
+                    <td className="p-2 text-right font-medium text-foreground">
                       {r.value}{r.exercise_type === 'plank' ? ' сек' : ''}
                     </td>
                   </tr>
@@ -217,9 +217,9 @@ export default function Dashboard() {
       )}
 
       {!stats && (
-        <div className="text-center py-12">
-          <Dumbbell className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-          <p className="text-gray-500">Пока нет данных. Начни тренировки! 🏋️</p>
+        <div className="text-center py-12 animate-fade-in">
+          <Dumbbell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Пока нет данных. Начни тренировки! 🏋️</p>
         </div>
       )}
     </div>

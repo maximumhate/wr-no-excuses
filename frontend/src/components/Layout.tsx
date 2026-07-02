@@ -3,13 +3,15 @@ import { useAuth } from '../hooks/useAuth'
 import { logout as apiLogout } from '../api/auth'
 import {
   LayoutDashboard, BarChart3, CreditCard, LogOut,
-  Dumbbell, Trophy
+  Dumbbell, Trophy, BookOpen
 } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 const navItems = [
   { path: '/', label: 'Дашборд', icon: LayoutDashboard },
   { path: '/stats', label: 'Лидерборд', icon: BarChart3 },
   { path: '/achievements', label: 'Ачивки', icon: Trophy },
+  { path: '/rules', label: 'Правила', icon: BookOpen },
   { path: '/subscription', label: 'Подписка', icon: CreditCard },
 ]
 
@@ -18,7 +20,7 @@ function NavLink({ to, icon: Icon, label, active }: { to: string; icon: any; lab
     <Link
       to={to}
       className={`flex flex-col items-center gap-0.5 text-[10px] font-medium transition-colors ${
-        active ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'
+        active ? 'text-accent' : 'text-muted-foreground hover:text-secondary'
       }`}
     >
       <Icon className="w-5 h-5" />
@@ -39,11 +41,13 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-16 md:pb-0">
-      <nav className="hidden md:block bg-gray-900/80 backdrop-blur-sm border-b border-gray-800/50 px-4 py-3 sticky top-0 z-50">
+    <div className="min-h-screen bg-page pb-16 md:pb-0">
+      <nav className="hidden md:block bg-elevated backdrop-blur-sm border-b border-default px-4 py-3 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-lg font-bold">
-            <Dumbbell className="w-5 h-5 text-blue-400" />
+            <div className="w-8 h-8 rounded-xl animated-gradient flex items-center justify-center">
+              <Dumbbell className="w-4 h-4 text-white" />
+            </div>
             <span className="gradient-text">WorldRun</span>
           </Link>
           <div className="flex items-center gap-1">
@@ -51,19 +55,20 @@ export default function Layout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
                   location.pathname === item.path
-                    ? 'bg-blue-600/20 text-blue-400'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                    ? 'bg-accent/15 text-accent'
+                    : 'text-muted-foreground hover:text-secondary hover:bg-surface/50'
                 }`}
               >
                 <item.icon className="w-4 h-4" />
                 {item.label}
               </Link>
             ))}
+            <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-800/50 rounded-lg text-sm transition-colors ml-2"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-muted-foreground hover:text-danger hover:bg-surface/50 rounded-lg text-sm transition-colors ml-2"
             >
               <LogOut className="w-4 h-4" />
               Выйти
@@ -76,7 +81,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-sm border-t border-gray-800/50 px-2 py-2 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-elevated backdrop-blur-sm border-t border-default px-2 py-2 z-50">
         <div className="flex items-center justify-around">
           {navItems.map(item => (
             <NavLink
@@ -87,7 +92,7 @@ export default function Layout() {
               active={location.pathname === item.path}
             />
           ))}
-          <button onClick={handleLogout} className="flex flex-col items-center gap-0.5 text-[10px] font-medium text-gray-500">
+          <button onClick={handleLogout} className="flex flex-col items-center gap-0.5 text-[10px] font-medium text-muted-foreground">
             <LogOut className="w-5 h-5" />
             Выйти
           </button>
