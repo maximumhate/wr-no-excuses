@@ -76,12 +76,9 @@ async def warn_and_delete(message: Message, reason: str) -> None:
     # 3. Send the warning to the chat/thread
     warning_msg = None
     try:
-        thread_id = getattr(message, "message_thread_id", None)
-        warning_msg = await message.bot.send_message(
-            chat_id=message.chat.id,
+        warning_msg = await message.answer(
             text=warning_text,
-            parse_mode="HTML",
-            message_thread_id=thread_id
+            parse_mode="HTML"
         )
     except Exception as e:
         logger.warning(f"Could not send warning message: {e}")
