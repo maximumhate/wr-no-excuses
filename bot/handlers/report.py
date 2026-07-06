@@ -118,6 +118,8 @@ def has_required_video(message: Message) -> bool:
 async def handle_report(message: Message):
     if message.chat.type not in ("group", "supergroup"):
         return
+    if message.is_automatic_forward or (message.from_user and message.from_user.id == 777000):
+        return
     if message.from_user and message.from_user.is_bot:
         return
 
