@@ -11,167 +11,6 @@ interface Achievement {
   achieved_at: string | null
 }
 
-const BADGE_DESIGNS: Record<string, {
-  colors: [string, string],
-  accent: string,
-  svg: React.ReactNode
-}> = {
-  first_report: {
-    colors: ['#ff4b4b', '#9b0000'],
-    accent: '#ff4b4b',
-    svg: (
-      <>
-        <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="12" cy="12" r="2.5" fill="currentColor" />
-        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" strokeWidth="1" strokeDasharray="1.5,1.5" />
-        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="1" strokeDasharray="1.5,1.5" />
-      </>
-    )
-  },
-  streak_7: {
-    colors: ['#ff5f00', '#ffb000'],
-    accent: '#ff5f00',
-    svg: (
-      <path d="M12 4.5c-1.8 2.5-3 4-3 6.5 0 2.2 1.3 4 3 4s3-1.8 3-4c0-2.5-1.2-4-3-6.5zm-1 5.5a1 1 0 1 1 2 0 1 1 0 0 1-2 0z" fill="currentColor" />
-    )
-  },
-  streak_30: {
-    colors: ['#00d2ff', '#0066ff'],
-    accent: '#00d2ff',
-    svg: (
-      <path d="M13 3.5L6.5 13h4.5v7.5l6.5-9.5h-4.5z" fill="currentColor" />
-    )
-  },
-  pushups_1000: {
-    colors: ['#10b981', '#065f46'],
-    accent: '#10b981',
-    svg: (
-      <>
-        <path d="M4 14.5h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M12 7.5l-4 4.5h8z" fill="currentColor" />
-        <line x1="12" y1="4.5" x2="12" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </>
-    )
-  },
-  squats_1000: {
-    colors: ['#f59e0b', '#b45309'],
-    accent: '#f59e0b',
-    svg: (
-      <>
-        <circle cx="6.5" cy="12" r="2.5" fill="currentColor" />
-        <circle cx="17.5" cy="12" r="2.5" fill="currentColor" />
-        <line x1="9" y1="12" x2="15" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <line x1="12" y1="9" x2="12" y2="15" stroke="currentColor" strokeWidth="1" strokeDasharray="2,2" />
-      </>
-    )
-  },
-  pullups_1000: {
-    colors: ['#8b5cf6', '#5b21b6'],
-    accent: '#8b5cf6',
-    svg: (
-      <>
-        <line x1="4.5" y1="8" x2="19.5" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M8.5 8v4.5c0 1.5 1.5 2.5 3.5 2.5s3.5-1 3.5-2.5V8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      </>
-    )
-  },
-  abs_1000: {
-    colors: ['#ec4899', '#9d174d'],
-    accent: '#ec4899',
-    svg: (
-      <>
-        <path d="M12 4.5s5 1.5 5 5.5c0 3.5-3.5 5.5-5 6.5-1.5-1-5-3-5-6.5 0-4 5-5.5 5-5.5z" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <line x1="9.5" y1="9" x2="14.5" y2="9" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="9.5" y1="12" x2="14.5" y2="12" stroke="currentColor" strokeWidth="1.5" />
-      </>
-    )
-  },
-  plank_3600: {
-    colors: ['#14b8a6', '#0f766e'],
-    accent: '#14b8a6',
-    svg: (
-      <>
-        <circle cx="12" cy="12.5" r="5" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M12 9.5V13l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="10" y1="5.5" x2="14" y2="5.5" stroke="currentColor" strokeWidth="1.5" />
-      </>
-    )
-  },
-  triple: {
-    colors: ['#f43f5e', '#be123c'],
-    accent: '#f43f5e',
-    svg: (
-      <path d="M7.5 5h9M12 15.5V19m-3 0h6m-5.5-14v5.5c0 2 1.5 3.5 4 3.5s4-1.5 4-3.5V5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-    )
-  },
-  reports_100: {
-    colors: ['#fbbf24', '#b45309'],
-    accent: '#fbbf24',
-    svg: (
-      <path d="M4 17l1.5-9 3.5 3.5 3-5.5 3 5.5 3.5-3.5 1.5 9z" fill="currentColor" stroke="currentColor" strokeWidth="0.5" />
-    )
-  },
-  platinum: {
-    colors: ['#e2e8f0', '#475569'],
-    accent: '#cbd5e1',
-    svg: (
-      <path d="M12 4l-6.5 5.5 6.5 10.5 6.5-10.5L12 4zm-5.5 5.5h11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-    )
-  }
-}
-
-function HexBadge({ slug, achieved }: { slug: string, achieved: boolean }) {
-  const design = BADGE_DESIGNS[slug] || {
-    colors: ['#94a3b8', '#475569'],
-    accent: '#94a3b8',
-    svg: <circle cx="12" cy="12" r="5" fill="currentColor" />
-  }
-
-  const gradId = `grad-${slug}`
-  
-  return (
-    <div className="relative w-16 h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-      {achieved && (
-        <div 
-          className="absolute inset-0 rounded-full blur-xl opacity-30 animate-pulse transition-opacity" 
-          style={{ backgroundColor: design.accent }}
-        />
-      )}
-      <svg viewBox="0 0 24 24" className="w-full h-full drop-shadow-md">
-        <defs>
-          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={achieved ? design.colors[0] : '#3f3f46'} />
-            <stop offset="100%" stopColor={achieved ? design.colors[1] : '#18181b'} />
-          </linearGradient>
-        </defs>
-        
-        {/* Hexagon Shape */}
-        <polygon 
-          points="12,2 21.5,7.5 21.5,18.5 12,24 2.5,18.5 2.5,7.5" 
-          fill={`url(#${gradId})`}
-          stroke={achieved ? design.accent : '#27272a'}
-          strokeWidth={achieved ? '1.5' : '1'}
-          className="transition-all duration-300"
-        />
-
-        {/* Icon Slot */}
-        <g 
-          className={`transition-colors duration-300 ${achieved ? 'text-white' : 'text-zinc-600'}`}
-          transform="translate(0, 0)"
-        >
-          {design.svg}
-        </g>
-      </svg>
-      
-      {!achieved && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-full">
-          <Lock className="w-3.5 h-3.5 text-zinc-500" />
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function Achievements() {
   const [achievements, setAchievements] = useState<Achievement[]>([])
 
@@ -213,35 +52,48 @@ export default function Achievements() {
         {achievements.map(a => (
           <div 
             key={a.slug} 
-            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 min-h-[190px] flex flex-col justify-between ${
+            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 min-h-[220px] flex flex-col justify-between ${
               a.achieved 
                 ? 'bg-surface/20 border-default hover:border-accent/40 hover:bg-surface/30' 
-                : 'bg-inset/10 border-default/40 opacity-70 hover:opacity-90'
+                : 'bg-inset/10 border-default/40 opacity-75 hover:opacity-90'
             }`}
           >
-            {/* Hex badge graphic & lock */}
-            <div className="flex items-start justify-between">
-              <HexBadge slug={a.slug} achieved={a.achieved} />
+            {/* Holographic 3D Badge Graphic */}
+            <div className="relative w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+              {a.achieved && (
+                <div 
+                  className="absolute inset-0 rounded-full blur-xl opacity-30 animate-pulse bg-accent" 
+                />
+              )}
+              <img 
+                src={`/achievements/${a.slug}.jpg`} 
+                alt={a.title}
+                className={`w-24 h-24 rounded-2xl object-cover border transition-all duration-300 group-hover:scale-105 ${
+                  a.achieved 
+                    ? 'border-accent/30 shadow-[0_0_15px_rgba(215,255,53,0.15)]' 
+                    : 'border-zinc-800/80 grayscale contrast-75 brightness-75 opacity-40'
+                }`}
+              />
               {!a.achieved && (
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest border border-zinc-800 bg-zinc-950/40 px-2 py-0.5 rounded-md">
-                  Заблокирован
-                </span>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl border border-zinc-800/30">
+                  <Lock className="w-6 h-6 text-zinc-400" />
+                </div>
               )}
             </div>
 
             {/* Achievement text */}
-            <div className="mt-4 space-y-1">
+            <div className="space-y-1 text-center">
               <h3 className="text-base font-extrabold text-foreground tracking-wide group-hover:text-accent transition-colors duration-200">
                 {a.title}
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed px-1">
                 {a.description}
               </p>
             </div>
 
             {/* Status footer */}
             <div className="mt-4 pt-3 border-t border-default/40 flex items-center justify-between text-[10px] font-mono">
-              <span className="text-muted-foreground uppercase">Прогресс</span>
+              <span className="text-muted-foreground uppercase">Статус</span>
               {a.achieved && a.achieved_at ? (
                 <span className="text-accent uppercase font-bold">
                   {new Date(a.achieved_at).toLocaleDateString('ru-RU')}
