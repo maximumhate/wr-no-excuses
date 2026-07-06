@@ -8,7 +8,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.challenge import Challenge, ChallengeRegistration, ChallengeRegistrationExercise
 from app.models.difficulty import ExerciseDifficultyRule, UserExerciseDifficulty
-from app.models.report import ExerciseType, Report
+from app.models.report import ExerciseType, Report, ReportStatus
 from app.models.streak import Streak
 from app.models.subscription import Subscription
 from app.models.user import User
@@ -89,6 +89,50 @@ async def get_current_registration(user_id, challenge_id, db: AsyncSession) -> C
     return result.scalar_one_or_none()
 
 
+async def ensure_user_registration(user: User, challenge: Challenge, db: AsyncSession) -> ChallengeRegistration | None:
+    reg = await get_current_registration(user.id, challenge.id, db)
+    if reg:
+        return reg
+
+    # Find the user's latest registration from any previous challenge
+    latest_reg_query = await db.execute(
+        select(ChallengeRegistration)
+        .where(ChallengeRegistration.user_id == user.id)
+        .order_by(ChallengeRegistration.registered_at.desc())
+        .limit(1)
+    )
+    latest_reg = latest_reg_query.scalar_one_or_none()
+    if not latest_reg:
+        return None
+
+    # Clone the registration for the current challenge
+    new_reg = ChallengeRegistration(
+        challenge_id=challenge.id,
+        user_id=user.id,
+        name=latest_reg.name,
+        city=latest_reg.city,
+    )
+    db.add(new_reg)
+    await db.flush()
+
+    # Clone the exercises
+    ex_query = await db.execute(
+        select(ChallengeRegistrationExercise)
+        .where(ChallengeRegistrationExercise.registration_id == latest_reg.id)
+    )
+    for ex in ex_query.scalars().all():
+        db.add(ChallengeRegistrationExercise(
+            registration_id=new_reg.id,
+            exercise_type=ex.exercise_type,
+            difficulty=ex.difficulty,
+        ))
+    
+    await db.flush()
+    # Refresh to load the exercises relationship
+    await db.refresh(new_reg)
+    return new_reg
+
+
 @router.get("/current")
 async def current_challenge(db: AsyncSession = Depends(get_db)):
     challenge = await ensure_current_challenge(db)
@@ -99,7 +143,7 @@ async def current_challenge(db: AsyncSession = Depends(get_db)):
 @router.get("/me")
 async def my_current_challenge(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     challenge = await ensure_current_challenge(db)
-    registration = await get_current_registration(user.id, challenge.id, db)
+    registration = await ensure_user_registration(user, challenge, db)
     await db.commit()
     return {
         "challenge": serialize_challenge(challenge),
@@ -137,7 +181,7 @@ async def bot_profile(telegram_id: int, request: Request, db: AsyncSession = Dep
         raise HTTPException(404, "User not found")
 
     challenge = await ensure_current_challenge(db)
-    registration = await get_current_registration(user.id, challenge.id, db)
+    registration = await ensure_user_registration(user, challenge, db)
     sub_result = await db.execute(select(Subscription).where(Subscription.user_id == user.id))
     sub = sub_result.scalar_one_or_none()
     difficulties = await db.execute(select(UserExerciseDifficulty).where(UserExerciseDifficulty.user_id == user.id))
@@ -308,7 +352,7 @@ async def current_stats_for_bot(telegram_id: int, request: Request, db: AsyncSes
         raise HTTPException(404, "User not found")
 
     challenge = await ensure_current_challenge(db)
-    registration = await get_current_registration(user.id, challenge.id, db)
+    registration = await ensure_user_registration(user, challenge, db)
     if not registration:
         raise HTTPException(404, "Not registered for current challenge")
 
@@ -354,7 +398,7 @@ async def mark_current_announcement_sent(request: Request, db: AsyncSession = De
 
 async def validate_report_registration(user: User, exercise_type: ExerciseType, value: int, db: AsyncSession):
     challenge = await ensure_current_challenge(db)
-    registration = await get_current_registration(user.id, challenge.id, db)
+    registration = await ensure_user_registration(user, challenge, db)
     if not registration:
         raise HTTPException(403, "Ты не зарегистрирован на текущий челлендж. Открой /start в боте")
 
@@ -377,3 +421,69 @@ async def validate_report_registration(user: User, exercise_type: ExerciseType, 
             raise HTTPException(400, f"Максимум для уровня {rule.title}: {rule.max_value} {rule.unit}")
 
     return challenge, registration
+
+
+@router.get("/reminders/pending")
+async def pending_reminders(request: Request, db: AsyncSession = Depends(get_db)):
+    require_bot(request)
+    challenge = await ensure_current_challenge(db)
+    today = today_msk()
+    yesterday = today - timedelta(days=1)
+
+    # 1. Get all registered users for the current challenge
+    registrations_query = await db.execute(
+        select(ChallengeRegistration.user_id)
+        .where(ChallengeRegistration.challenge_id == challenge.id)
+    )
+    registered_user_ids = [row[0] for row in registrations_query.all()]
+
+    if not registered_user_ids:
+        return {"reminders": [], "streak_warnings": []}
+
+    # 2. Get users who have already reported today
+    reported_query = await db.execute(
+        select(Report.user_id)
+        .where(
+            Report.user_id.in_(registered_user_ids),
+            Report.report_date == today,
+            Report.status == ReportStatus.approved
+        )
+    )
+    reported_user_ids = {row[0] for row in reported_query.all()}
+
+    # 3. Users to remind (registered but not reported today)
+    remind_user_ids = [uid for uid in registered_user_ids if uid not in reported_user_ids]
+
+    if not remind_user_ids:
+        return {"reminders": [], "streak_warnings": []}
+
+    # Fetch users with telegram_id
+    users_query = await db.execute(
+        select(User)
+        .where(User.id.in_(remind_user_ids))
+    )
+    users = users_query.scalars().all()
+    user_map = {u.id: u.telegram_id for u in users if u.telegram_id}
+
+    # 4. Filter users for streak warnings (whose streak will burn today)
+    streak_warnings = []
+    reminders = []
+
+    streaks_query = await db.execute(
+        select(Streak)
+        .where(Streak.user_id.in_(list(user_map.keys())))
+    )
+    streaks = streaks_query.scalars().all()
+    streak_map = {s.user_id: s for s in streaks}
+
+    for uid, tg_id in user_map.items():
+        user_streak = streak_map.get(uid)
+        if user_streak and user_streak.current_streak > 0 and user_streak.last_report_date == yesterday:
+            streak_warnings.append({"telegram_id": tg_id, "days": 1})
+        else:
+            reminders.append({"telegram_id": tg_id})
+
+    return {
+        "reminders": reminders,
+        "streak_warnings": streak_warnings
+    }

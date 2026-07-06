@@ -156,5 +156,11 @@ class ApiClient:
     async def mark_current_announcement_sent(self):
         await self.client.post("/api/challenges/current/announcement/sent", headers=self.bot_headers)
 
+    async def get_pending_reminders(self) -> dict | None:
+        resp = await self.client.get("/api/challenges/reminders/pending", headers=self.bot_headers)
+        if resp.status_code == 200:
+            return resp.json()
+        return None
+
     async def close(self):
         await self.client.aclose()

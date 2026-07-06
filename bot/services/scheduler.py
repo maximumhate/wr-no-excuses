@@ -26,7 +26,37 @@ async def weekly_challenge_announcement(bot: Bot):
 
 async def evening_reminder(bot: Bot):
     """Send reminders at 20:00 MSK to users who haven't reported today."""
-    logger.info("Evening reminder placeholder — API integration TBD")
+    from bot.services.notification import send_reminder, send_streak_warning
+    api = ApiClient()
+    try:
+        data = await api.get_pending_reminders()
+        if not data:
+            return
+        
+        reminders = data.get("reminders", [])
+        streak_warnings = data.get("streak_warnings", [])
+        
+        logger.info(f"Sending {len(reminders)} regular reminders and {len(streak_warnings)} streak warnings")
+        
+        # 1. Send streak warnings
+        for sw in streak_warnings:
+            tg_id = sw.get("telegram_id")
+            days = sw.get("days", 1)
+            if tg_id:
+                await send_streak_warning(bot, tg_id, days)
+                await asyncio.sleep(0.05)
+
+        # 2. Send regular reminders
+        for rem in reminders:
+            tg_id = rem.get("telegram_id")
+            if tg_id:
+                await send_reminder(bot, tg_id)
+                await asyncio.sleep(0.05)
+                
+    except Exception as e:
+        logger.error(f"Evening reminders failed: {e}")
+    finally:
+        await api.close()
 
 async def process_pending_broadcasts(bot: Bot):
     """Poll backend for pending broadcasts and send them."""
@@ -58,25 +88,33 @@ async def process_pending_broadcasts(bot: Bot):
     finally:
         await api.close()
 
-async def run_scheduler(bot: Bot):
-    post_time = time(21, 1)  # 00:01 MSK = 21:01 UTC (summer) / adjust as needed
-    reminder_time = time(17, 0)  # 20:00 MSK = 17:00 UTC
-
+async def run_daily_post_scheduler(bot: Bot):
+    post_time = time(21, 1)  # 00:01 MSK = 21:01 UTC
     while True:
-        delay_post = next_at(post_time)
-        logger.info(f"Next daily post in {delay_post:.0f}s")
-        await asyncio.sleep(delay_post)
+        delay = next_at(post_time)
+        logger.info(f"Next daily post in {delay:.0f}s")
+        await asyncio.sleep(delay)
         try:
             await daily_post(bot)
         except Exception as e:
             logger.error(f"Daily post failed: {e}")
 
-        delay_reminder = next_at(reminder_time)
-        await asyncio.sleep(delay_reminder)
+
+async def run_reminder_scheduler(bot: Bot):
+    reminder_time = time(17, 0)  # 20:00 MSK = 17:00 UTC
+    while True:
+        delay = next_at(reminder_time)
+        logger.info(f"Next evening reminder in {delay:.0f}s")
+        await asyncio.sleep(delay)
         try:
             await evening_reminder(bot)
         except Exception as e:
             logger.error(f"Reminder failed: {e}")
+
+
+async def run_scheduler(bot: Bot):
+    asyncio.create_task(run_daily_post_scheduler(bot))
+    asyncio.create_task(run_reminder_scheduler(bot))
 
 async def run_broadcast_scheduler(bot: Bot):
     while True:
