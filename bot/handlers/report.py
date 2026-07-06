@@ -1,5 +1,6 @@
 import logging
 import re
+import asyncio
 
 from aiogram import Router, types
 from aiogram.types import Message
@@ -54,8 +55,51 @@ async def safe_delete(message: Message) -> None:
 
 
 async def warn_and_delete(message: Message, reason: str) -> None:
-    logger.info(f"Deleting invalid report message {message.message_id}: {reason}")
+    logger.info(f"Handling invalid report message {message.message_id}: {reason}")
+    
+    # 1. Prepare tag
+    user_tag = "Участник"
+    if message.from_user:
+        if message.from_user.username:
+            user_tag = f"@{message.from_user.username}"
+        else:
+            user_tag = f'<a href="tg://user?id={message.from_user.id}">{message.from_user.first_name}</a>'
+            
+    # 2. Format explanation
+    formatted_reason = reason[0].upper() + reason[1:]
+    warning_text = f"⚠️ {user_tag}, сообщение не принято: <b>{formatted_reason}</b>."
+    
+    # If the user is not registered, highlight starting the bot
+    if "зарегистрирован" in reason.lower():
+        warning_text = f"⚠️ {user_tag}, вы не зарегистрированы!\n👉 Сначала перейдите в бот @wr_no_excuses_reg_bot и нажмите /start."
+
+    # 3. Send the warning to the chat/thread
+    warning_msg = None
+    try:
+        thread_id = getattr(message, "message_thread_id", None)
+        warning_msg = await message.bot.send_message(
+            chat_id=message.chat.id,
+            text=warning_text,
+            parse_mode="HTML",
+            message_thread_id=thread_id
+        )
+    except Exception as e:
+        logger.warning(f"Could not send warning message: {e}")
+        
+    # 4. Delete the invalid user message
     await safe_delete(message)
+    
+    # 5. Wait for 60 seconds and delete the warning message (to avoid spam)
+    if warning_msg:
+        async def delete_warning_later(msg_to_delete):
+            await asyncio.sleep(60)
+            try:
+                await msg_to_delete.delete()
+                logger.info(f"Deleted warning message {msg_to_delete.message_id} after timeout")
+            except Exception as e:
+                logger.warning(f"Could not delete warning message {msg_to_delete.message_id}: {e}")
+        
+        asyncio.create_task(delete_warning_later(warning_msg))
 
 
 def parse_duration_seconds(value_text: str) -> int | None:
