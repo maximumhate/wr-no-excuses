@@ -73,10 +73,10 @@ async def warn_and_delete(message: Message, reason: str) -> None:
     if "зарегистрирован" in reason.lower():
         warning_text = f"⚠️ {user_tag}, вы не зарегистрированы!\n👉 Сначала перейдите в бот @wr_no_excuses_reg_bot и нажмите /start."
 
-    # 3. Send the warning to the chat/thread
+    # 3. Send the warning as a reply to the user's message (so it shows up in channel comments)
     warning_msg = None
     try:
-        warning_msg = await message.answer(
+        warning_msg = await message.reply(
             text=warning_text,
             parse_mode="HTML"
         )
