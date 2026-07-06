@@ -8,18 +8,23 @@ logger = logging.getLogger(__name__)
 
 async def send_daily_post(bot: Bot):
     """Post daily workout challenge to the channel."""
+    from datetime import datetime, timezone, timedelta
+    msk_tz = timezone(timedelta(hours=3))
+    date_str = datetime.now(msk_tz).strftime("%d.%m.%Y")
+
     api = ApiClient()
     try:
         template = await api.get_bot_text("daily_post")
     finally:
         await api.close()
     text = (template or (
-        "🌅 <b>Доброе утро, чемпионы!</b>\n\n"
-        "В этот тред можно отправлять только отчёты. Любой другой текст будет удалён.\n\n"
-        "<b>Обязательно:</b> видео или кружок + caption в этом же сообщении.\n\n"
-        f"<pre>{REPORT_FORMAT_HTML}</pre>\n\n"
-        f"{RULES_SHORT_HTML}"
-    )).format(report_format=REPORT_FORMAT_HTML, rules_short=RULES_SHORT_HTML)
+        "🌅 <b>Доброе утро, чемпионы!</b>\n"
+        "Пост для отчётов за <b>{date}</b>\n\n"
+        "В этот пост можно отправлять только отчёты. Любой другой текст будет удалён.\n\n"
+        "<b>Обязательно:</b> видео или кружок + описание одним сообщением!\n\n"
+        "<pre>{report_format}</pre>\n\n"
+        "{rules_short}"
+    )).format(report_format=REPORT_FORMAT_HTML, rules_short=RULES_SHORT_HTML, date=date_str)
     try:
         msg = await bot.send_message(
             chat_id=settings.channel_id,
