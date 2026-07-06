@@ -7,6 +7,7 @@ from app.models.achievement import Achievement, UserAchievement
 from app.models.report import Report, ExerciseType, ReportStatus
 from app.models.streak import Streak
 from app.models.subscription import Subscription, PlanType
+from app.services.challenges import today_msk
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,7 @@ async def check_achievements(user_id, db) -> list[Achievement]:
             if ach:
                 new_achievements.append(ach)
 
-    today = date.today()
+    today = today_msk()
     today_ex = await db.execute(
         select(Report.exercise_type).where(
             Report.user_id == user_id,
