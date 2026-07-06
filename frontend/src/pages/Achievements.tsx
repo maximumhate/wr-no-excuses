@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
-import { Lock, Trophy, Calendar, Sparkles } from 'lucide-react'
+import { 
+  Lock, Trophy, Calendar, Sparkles, Target, Flame, 
+  Shield, Dumbbell, Activity, TrendingUp, Zap, Timer, 
+  Crown, Gem 
+} from 'lucide-react'
 
 interface Achievement {
   slug: string
@@ -9,6 +13,132 @@ interface Achievement {
   icon: string
   achieved: boolean
   achieved_at: string | null
+}
+
+const ICON_MAP: Record<string, {
+  icon: any,
+  color: string,
+  bgGrad: string,
+  shadow: string
+}> = {
+  first_report: {
+    icon: Target,
+    color: '#ff4b4b',
+    bgGrad: 'from-red-500/20 to-red-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(255,75,75,0.25)]'
+  },
+  streak_7: {
+    icon: Flame,
+    color: '#ff7a00',
+    bgGrad: 'from-orange-500/20 to-orange-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(255,122,0,0.25)]'
+  },
+  streak_30: {
+    icon: Shield,
+    color: '#00d2ff',
+    bgGrad: 'from-cyan-500/20 to-cyan-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(0,210,255,0.25)]'
+  },
+  pushups_1000: {
+    icon: Dumbbell,
+    color: '#10b981',
+    bgGrad: 'from-emerald-500/20 to-emerald-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(16,185,129,0.25)]'
+  },
+  squats_1000: {
+    icon: Activity,
+    color: '#f59e0b',
+    bgGrad: 'from-amber-500/20 to-amber-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(245,158,11,0.25)]'
+  },
+  pullups_1000: {
+    icon: TrendingUp,
+    color: '#8b5cf6',
+    bgGrad: 'from-violet-500/20 to-violet-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(139,92,246,0.25)]'
+  },
+  abs_1000: {
+    icon: Zap,
+    color: '#ec4899',
+    bgGrad: 'from-pink-500/20 to-pink-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(236,72,153,0.25)]'
+  },
+  plank_3600: {
+    icon: Timer,
+    color: '#14b8a6',
+    bgGrad: 'from-teal-500/20 to-teal-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(20,184,166,0.25)]'
+  },
+  triple: {
+    icon: Sparkles,
+    color: '#f43f5e',
+    bgGrad: 'from-rose-500/20 to-rose-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(244,63,94,0.25)]'
+  },
+  reports_100: {
+    icon: Crown,
+    color: '#fbbf24',
+    bgGrad: 'from-yellow-500/20 to-yellow-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(251,191,36,0.25)]'
+  },
+  platinum: {
+    icon: Gem,
+    color: '#cbd5e1',
+    bgGrad: 'from-slate-400/20 to-slate-800/40',
+    shadow: 'shadow-[0_0_20px_rgba(203,213,225,0.25)]'
+  },
+  winner: {
+    icon: Trophy,
+    color: '#fbbf24',
+    bgGrad: 'from-yellow-500/20 to-yellow-950/40',
+    shadow: 'shadow-[0_0_20px_rgba(251,191,36,0.3)]'
+  }
+}
+
+function AchievementBadge({ slug, achieved }: { slug: string, achieved: boolean }) {
+  const design = ICON_MAP[slug] || {
+    icon: Trophy,
+    color: '#94a3b8',
+    bgGrad: 'from-zinc-500/20 to-zinc-950/40',
+    shadow: 'shadow-none'
+  }
+  
+  const Icon = design.icon
+
+  return (
+    <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+      {/* Outer Neon Glow */}
+      {achieved && (
+        <div 
+          className="absolute inset-2 rounded-full blur-lg opacity-40 animate-pulse" 
+          style={{ backgroundColor: design.color }}
+        />
+      )}
+      
+      {/* Symmetrical Glassmorphic Frame */}
+      <div 
+        className={`w-16 h-16 relative flex items-center justify-center rounded-2xl border transition-all duration-300 ${
+          achieved 
+            ? `bg-gradient-to-br ${design.bgGrad} border-white/10 ${design.shadow}` 
+            : 'bg-zinc-950/40 border-zinc-800/50'
+        }`}
+        style={achieved ? { borderColor: `${design.color}33` } : {}}
+      >
+        {/* Core Icon */}
+        <Icon 
+          className={`w-8 h-8 transition-colors duration-300`}
+          style={achieved ? { color: design.color } : { color: '#3f3f46' }}
+        />
+        
+        {/* Lock Overlay */}
+        {!achieved && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl border border-zinc-900/30">
+            <Lock className="w-5 h-5 text-zinc-500" />
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function Achievements() {
@@ -52,37 +182,19 @@ export default function Achievements() {
         {achievements.map(a => (
           <div 
             key={a.slug} 
-            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 min-h-[220px] flex flex-col justify-between ${
+            className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 min-h-[200px] flex flex-col justify-between ${
               a.achieved 
                 ? 'bg-surface/20 border-default hover:border-accent/40 hover:bg-surface/30' 
                 : 'bg-inset/10 border-default/40 opacity-75 hover:opacity-90'
             }`}
           >
-            {/* Holographic 3D Badge Graphic */}
-            <div className="relative w-24 h-24 mx-auto mb-4 flex items-center justify-center">
-              {a.achieved && (
-                <div 
-                  className="absolute inset-0 rounded-full blur-xl opacity-30 animate-pulse bg-accent" 
-                />
-              )}
-              <img 
-                src={`/achievements/${a.slug}.jpg`} 
-                alt={a.title}
-                className={`w-24 h-24 rounded-2xl object-cover border transition-all duration-300 group-hover:scale-105 ${
-                  a.achieved 
-                    ? 'border-accent/30 shadow-[0_0_15px_rgba(215,255,53,0.15)]' 
-                    : 'border-zinc-800/80 grayscale contrast-75 brightness-75 opacity-40'
-                }`}
-              />
-              {!a.achieved && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl border border-zinc-800/30">
-                  <Lock className="w-6 h-6 text-zinc-400" />
-                </div>
-              )}
+            {/* Hex badge graphic & lock */}
+            <div className="flex items-start justify-center pt-2">
+              <AchievementBadge slug={a.slug} achieved={a.achieved} />
             </div>
 
             {/* Achievement text */}
-            <div className="space-y-1 text-center">
+            <div className="space-y-1 text-center mt-2">
               <h3 className="text-base font-extrabold text-foreground tracking-wide group-hover:text-accent transition-colors duration-200">
                 {a.title}
               </h3>
