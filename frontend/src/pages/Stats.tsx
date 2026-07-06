@@ -69,7 +69,7 @@ export default function Stats() {
         </select>
         <div className="relative flex-1 min-w-[220px] max-w-sm">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <input className="control w-full pl-12" placeholder="Поиск: имя, username, город, TG ID" value={filter.search} onChange={e => setFilter(f => ({...f, search: e.target.value}))} />
+          <input className="control w-full" style={{ paddingLeft: '2.75rem' }} placeholder="Поиск: имя, username, город, TG ID" value={filter.search} onChange={e => setFilter(f => ({...f, search: e.target.value}))} />
         </div>
       </div>
 

@@ -78,7 +78,7 @@ export default function AdminUsers() {
 
       <div className="relative max-w-md">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        <input className="control w-full pl-12" placeholder="Поиск: имя, username, город, TG ID" value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="control w-full" style={{ paddingLeft: '2.75rem' }} placeholder="Поиск: имя, username, город, TG ID" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

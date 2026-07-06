@@ -9,7 +9,6 @@ import AdminDashboard from './pages/Admin/Dashboard'
 import AdminUsers from './pages/Admin/Users'
 import AdminBroadcast from './pages/Admin/Broadcast'
 import AdminReports from './pages/Admin/Reports'
-import AdminCMS from './pages/Admin/CMS'
 import AdminLogin from './pages/AdminLogin'
 import Layout from './components/Layout'
 import AdminLayout from './components/AdminLayout'
@@ -26,7 +25,6 @@ export default function App() {
         <Route path="users" element={<AdminUsers />} />
         <Route path="broadcast" element={<AdminBroadcast />} />
         <Route path="reports" element={<AdminReports />} />
-        <Route path="cms" element={<AdminCMS />} />
       </Route>
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />

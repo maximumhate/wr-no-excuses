@@ -1,13 +1,12 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { adminLogout } from '../api/adminAuth'
-import { LayoutDashboard, Users, FileText, Send, LogOut, Shield, SlidersHorizontal } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, Send, LogOut, Shield } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
 const adminItems = [
   { path: '/admin', label: 'Панель', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Юзеры', icon: Users },
   { path: '/admin/reports', label: 'Отчёты', icon: FileText },
-  { path: '/admin/cms', label: 'CMS', icon: SlidersHorizontal },
   { path: '/admin/broadcast', label: 'Рассылка', icon: Send },
 ]
 

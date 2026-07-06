@@ -101,7 +101,7 @@ export default function Dashboard() {
             
             <div className="space-y-2">
               <h1 className="font-display text-4xl md:text-6xl tracking-wider text-foreground uppercase">
-                Челлендж №{challenge?.number || 1}
+                Челлендж №{challenge?.number ?? '...'}
               </h1>
               <p className="text-secondary text-sm md:text-base flex items-center gap-2 font-mono">
                 <Clock className="w-4 h-4 text-accent" />
@@ -243,8 +243,8 @@ export default function Dashboard() {
         {/* Exercises Distribution Ring */}
         <div className="relative overflow-hidden rounded-2xl border border-default bg-surface/20 backdrop-blur-xl p-5 md:p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-lg uppercase tracking-wider text-foreground">Баланс нагрузки</h2>
-            <div className="text-xs font-mono text-muted-foreground uppercase">В процентах</div>
+            <h2 className="font-display text-lg uppercase tracking-wider text-foreground">Распределение нагрузки</h2>
+            <div className="text-xs font-mono text-muted-foreground uppercase">доля в тренировках</div>
           </div>
           {pieData.length ? (
             <div className="relative flex items-center justify-center">
@@ -276,8 +276,8 @@ export default function Dashboard() {
               {/* Technical Donut Core HUD readout */}
               <div className="absolute flex flex-col items-center justify-center text-center">
                 <Sparkles className="w-5 h-5 text-accent mb-1 animate-pulse" />
-                <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">цикл активности</span>
-                <span className="text-xs font-bold text-foreground font-mono">{stats?.total_reports ?? 0} раундов</span>
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">всего отправлено</span>
+                <span className="text-xs font-bold text-foreground font-mono">{stats?.total_reports ?? 0} отчётов</span>
               </div>
             </div>
           ) : (
@@ -327,19 +327,19 @@ export default function Dashboard() {
       <div className="relative overflow-hidden rounded-2xl border border-default bg-surface/20 backdrop-blur-xl p-5 md:p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-lg uppercase tracking-wider text-foreground flex items-center gap-2">
-            <Activity className="w-5 h-5 text-accent-2" /> Системный лог активности
+            <Activity className="w-5 h-5 text-accent-2" /> Последние отчёты
           </h2>
-          <span className="badge border-default bg-inset/50 font-mono text-[10px] uppercase">последние сессии</span>
+          <span className="badge border-default bg-inset/50 font-mono text-[10px] uppercase">история</span>
         </div>
         
         <div className="overflow-x-auto hide-scrollbar">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-default text-left">
-                <th className="pb-3 text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Временной штамп</th>
-                <th className="pb-3 text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Параметр телеметрии</th>
-                <th className="pb-3 text-right text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Амплитуда</th>
-                <th className="pb-3 text-right text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Верификация</th>
+                <th className="pb-3 text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Дата</th>
+                <th className="pb-3 text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Упражнение</th>
+                <th className="pb-3 text-right text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Результат</th>
+                <th className="pb-3 text-right text-[10px] uppercase tracking-wider text-muted-foreground font-mono font-bold">Статус</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-default/40">
@@ -371,7 +371,7 @@ export default function Dashboard() {
               {history.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-8 text-center text-muted-foreground font-mono uppercase tracking-wider text-xs">
-                    Данные активности отсутствуют в системе
+                    История отчётов пуста
                   </td>
                 </tr>
               )}
