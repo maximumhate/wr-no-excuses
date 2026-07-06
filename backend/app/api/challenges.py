@@ -13,7 +13,7 @@ from app.models.streak import Streak
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.api.users import get_current_user
-from app.services.challenges import ensure_current_challenge, serialize_challenge
+from app.services.challenges import ensure_current_challenge, serialize_challenge, today_msk
 from app.services.exercises import EXERCISE_TYPES, EXERCISES, get_exercise_label
 
 router = APIRouter(prefix="/api/challenges", tags=["challenges"])
